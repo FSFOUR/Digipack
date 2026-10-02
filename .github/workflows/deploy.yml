@@ -1,4 +1,4 @@
-name: Build and Deploy to Cloudflare Pages
+name: build-and-deploy
 
 on:
   push:
@@ -11,29 +11,51 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  CLOUDFLARE_PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'digipack-erp' }}
+
 jobs:
   build-and-deploy:
+    name: Build and Deploy DIGI PACK ERP
     runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
 
     steps:
+      # Step 1: Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Step 2: Set up Node.js 22 LTS
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci || npm install
+      # Safe Environment Diagnostics (No secrets printed)
+      - name: Environment Diagnostics
+        run: |
+          echo "=== Runner Environment ==="
+          node --version
+          npm --version
+          pwd
+          ls -la
 
+      # Step 3: Install Dependencies (npm ci using frozen package-lock.json)
+      - name: Install Dependencies
+        run: |
+          echo "=== Installing Dependencies via npm ci ==="
+          npm ci
+          echo "=== Top-level Installed Packages ==="
+          npm list --depth=0
+
+      # Step 4: Lint Code
       - name: Lint Code
         run: npm run lint
 
+      # Step 5: Build Application (Vite -> dist)
       - name: Build Application
         run: npm run build
         env:
@@ -42,20 +64,36 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_DATABASE_ID: ${{ secrets.VITE_FIREBASE_DATABASE_ID }}
 
+      # Step 6: Verify Build Output
       - name: Verify Build Artifacts
         run: |
-          test -d dist || { echo "Build failed: dist directory missing"; exit 1; }
-          test -f dist/index.html || { echo "Build failed: dist/index.html missing"; exit 1; }
-          test -f dist/_redirects || { echo "Notice: dist/_redirects created"; }
-          echo "Build successful! Ready for Cloudflare Pages deployment."
+          echo "=== Verifying Build Directory ==="
+          if [ ! -d "dist" ]; then
+            echo "ERROR: Build output directory 'dist' was not found!"
+            exit 1
+          fi
 
-      # Optional direct deployment step if Cloudflare API credentials are provided
-      - name: Deploy to Cloudflare Pages (Optional)
-        if: env.CLOUDFLARE_API_TOKEN != '' && github.event_name == 'push'
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: 'dist/index.html' is missing!"
+            exit 1
+          fi
+
+          if [ ! -f "dist/_redirects" ]; then
+            echo "ERROR: 'dist/_redirects' is missing (required for Cloudflare Pages SPA routing)!"
+            exit 1
+          fi
+
+          echo "SUCCESS: Build directory verified with index.html, _redirects, and assets:"
+          ls -la dist
+
+      # Step 7: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Pages
+        if: github.event_name == 'push' && env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=digipack-erp
+          command: pages deploy dist --project-name=${{ env.CLOUDFLARE_PROJECT_NAME }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
