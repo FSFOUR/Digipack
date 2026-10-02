@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  CLOUDFLARE_PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'digipack-erp' }}
+  CLOUDFLARE_PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'digipack' }}
 
 jobs:
   build-and-deploy:
