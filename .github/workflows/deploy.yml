@@ -1,0 +1,61 @@
+name: Build and Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Lint Code
+        run: npm run lint
+
+      - name: Build Application
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_DATABASE_ID: ${{ secrets.VITE_FIREBASE_DATABASE_ID }}
+
+      - name: Verify Build Artifacts
+        run: |
+          test -d dist || { echo "Build failed: dist directory missing"; exit 1; }
+          test -f dist/index.html || { echo "Build failed: dist/index.html missing"; exit 1; }
+          test -f dist/_redirects || { echo "Notice: dist/_redirects created"; }
+          echo "Build successful! Ready for Cloudflare Pages deployment."
+
+      # Optional direct deployment step if Cloudflare API credentials are provided
+      - name: Deploy to Cloudflare Pages (Optional)
+        if: env.CLOUDFLARE_API_TOKEN != '' && github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=digipack-erp
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

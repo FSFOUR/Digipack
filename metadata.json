@@ -1,0 +1,6 @@
+{
+  "name": "DIGI PACK ERP",
+  "description": "Production-ready Manufacturing ERP & MIS for Duplex Master Boxes with 2D Cutting Stock Visualizer, Workflow Traceability, and Role-Based Access.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

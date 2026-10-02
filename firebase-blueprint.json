@@ -1,0 +1,134 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with staff details, department, and approval state",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "staffId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "department": { "type": "string" },
+        "designation": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "ACTIVE", "SUSPENDED", "REJECTED"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "fullName", "email", "role", "status"]
+    },
+    "Customer": {
+      "title": "Customer Master",
+      "description": "Customer details and credit terms",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "companyName": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "mobile": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "billingAddress": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "gstin": { "type": "string" },
+        "state": { "type": "string" },
+        "district": { "type": "string" },
+        "paymentTerms": { "type": "string" },
+        "creditLimit": { "type": "number" },
+        "openingBalance": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["customerId", "customerName"]
+    },
+    "StockItem": {
+      "title": "Board Stock Master",
+      "description": "Duplex board stock size, GSM, and quantity balances",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "boardSize": { "type": "string" },
+        "length": { "type": "number" },
+        "width": { "type": "number" },
+        "gsm": { "type": "number" },
+        "creasing": { "type": "string" },
+        "boardType": { "type": "string" },
+        "openingStock": { "type": "number" },
+        "inQty": { "type": "number" },
+        "outQty": { "type": "number" },
+        "reservedQty": { "type": "number" },
+        "availableQty": { "type": "number" },
+        "rate": { "type": "number" },
+        "location": { "type": "string" },
+        "reorderLevel": { "type": "number" },
+        "minStock": { "type": "number" }
+      },
+      "required": ["boardSize", "length", "width"]
+    },
+    "Quotation": {
+      "title": "Quotation",
+      "description": "Customer quotation matching DIGI PACK letterhead format",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "quotationNo": { "type": "string" },
+        "date": { "type": "string" },
+        "validity": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "gstRate": { "type": "number" },
+        "gstAmount": { "type": "number" },
+        "totalBeforeFreight": { "type": "number" },
+        "freight": { "type": "string" },
+        "amountInWords": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["quotationNo", "customerName", "subtotal"]
+    },
+    "JobCard": {
+      "title": "Job Card",
+      "description": "Production Job Card matching DIGI PACK format",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "jobCardNo": { "type": "string" },
+        "date": { "type": "string" },
+        "deliveryDate": { "type": "string" },
+        "partyName": { "type": "string" },
+        "itemName": { "type": "string" },
+        "boardSize": { "type": "string" },
+        "ply": { "type": "string" },
+        "print": { "type": "string" },
+        "requiredQty": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["jobCardNo", "partyName", "requiredQty"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Staff user profile and role details"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer directory"
+    },
+    "/stock_items/{stockId}": {
+      "schema": "StockItem",
+      "description": "Duplex board stock inventory"
+    },
+    "/quotations/{quotationId}": {
+      "schema": "Quotation",
+      "description": "Quotations prepared for customers"
+    },
+    "/job_cards/{jobCardId}": {
+      "schema": "JobCard",
+      "description": "Job cards assigned to manufacturing line"
+    }
+  }
+}

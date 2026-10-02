@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body, #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  body {
+    @apply antialiased text-neutral-900 bg-neutral-100;
+  }
+}
+
+/* Remove side scroll bar on all mobile and tablet devices while keeping smooth scrolling */
+@media (max-width: 1024px) {
+  html,
+  body,
+  #root,
+  main,
+  div,
+  nav,
+  aside,
+  section,
+  ul {
+    -ms-overflow-style: none !important; /* IE and Edge */
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0px !important;
+    height: 0px !important;
+    background: transparent !important;
+  }
+}
+
+/* Utility class to explicitly hide scrollbars anywhere */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .no-print, header, nav, aside, footer {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  #quotation-print-sheet, #job-card-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
