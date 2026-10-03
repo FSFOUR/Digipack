@@ -1,18 +1,14 @@
-name: build-and-deploy
+name: DIGI PACK ERP CI/CD
 
 on:
   push:
     branches:
       - main
       - master
-  pull_request:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 env:
-  CLOUDFLARE_PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'digipack' }}
+  CLOUDFLARE_PROJECT_NAME: digipack
 
 jobs:
   build-and-deploy:
@@ -22,53 +18,47 @@ jobs:
       contents: read
       deployments: write
 
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
     steps:
       # Step 1: Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js 22 LTS
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Step 2: Set up Bun Runtime
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: 'npm'
+          bun-version: latest
 
-      # Safe Environment Diagnostics (No secrets printed)
+      # Step 3: Environment Diagnostics
       - name: Environment Diagnostics
         run: |
           echo "=== Runner Environment ==="
-          node --version
-          npm --version
+          bun --version
           pwd
           ls -la
 
-      # Step 3: Install Dependencies (npm ci using frozen package-lock.json)
+      # Step 4: Install Dependencies (Frozen lockfile via bun.lock)
       - name: Install Dependencies
-        run: |
-          echo "=== Installing Dependencies via npm ci ==="
-          npm ci
-          echo "=== Top-level Installed Packages ==="
-          npm list --depth=0
+        run: bun install --frozen-lockfile
 
-      # Step 4: Lint & TypeScript Verification
-      - name: Lint Code
-        run: npm run lint
+      # Step 5: Verify Installed Dependencies
+      - name: Dependency Verification
+        run: bun pm ls
 
-      # Step 5: Build Application (Vite -> dist)
-      - name: Build Application
-        run: npm run build
+      # Step 6: TypeScript & Lint Verification
+      - name: TypeScript & Lint Verification
+        run: bun run lint
+
+      # Step 7: Production Build (Vite -> dist)
+      - name: Production Build
+        run: bun run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_DATABASE_ID: ${{ secrets.VITE_FIREBASE_DATABASE_ID }}
 
-      # Step 6: Verify Build Output & SPA Configs
+      # Step 8: Verify Build Artifacts & SPA Routing
       - name: Verify Build Artifacts
         run: |
           echo "=== Verifying Build Directory ==="
@@ -87,23 +77,25 @@ jobs:
             exit 1
           fi
 
-          echo "SUCCESS: Build directory verified with index.html, _redirects, and assets:"
+          echo "SUCCESS: Build directory verified with index.html, _redirects, _headers, and assets:"
           ls -la dist
 
-      # Step 7: Informational step if Cloudflare Token is not set
-      - name: Cloudflare Configuration Notice
-        if: env.CLOUDFLARE_API_TOKEN == ''
-        run: |
-          echo "::notice ::CLOUDFLARE_API_TOKEN is not configured in GitHub Secrets. The build and validation completed with 0 errors! To enable automatic deployment to Cloudflare Pages on every push, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to your GitHub Repository > Settings > Secrets and variables > Actions."
-
-      # Step 8: Deploy to Cloudflare Pages (When credentials exist)
+      # Step 9: Deploy to Cloudflare Pages
       - name: Deploy to Cloudflare Pages
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.CLOUDFLARE_API_TOKEN != ''
+        if: env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ env.CLOUDFLARE_PROJECT_NAME }}
+          command: pages deploy dist --project-name=digipack
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Step 10: Informational notice when Cloudflare secrets are pending
+      - name: Cloudflare Deployment Status
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: |
+          echo "::notice ::Build, TypeScript validation, and asset verification completed successfully! To enable automatic edge deployment to Cloudflare Pages on push, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in your GitHub Repository > Settings > Secrets and variables > Actions."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
