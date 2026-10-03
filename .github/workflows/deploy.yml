@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
   workflow_dispatch:
 
 env:
@@ -18,39 +17,42 @@ jobs:
       contents: read
       deployments: write
 
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
     steps:
       # Step 1: Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Bun Runtime
+      # Step 2: Set up Pinned Bun Runtime (v1.2.4)
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.4
 
-      # Step 3: Environment Diagnostics
+      # Step 3: Safe Environment Diagnostics
       - name: Environment Diagnostics
         run: |
           echo "=== Runner Environment ==="
           bun --version
           pwd
-          ls -la
 
-      # Step 4: Install Dependencies (Frozen lockfile via bun.lock)
+      # Step 4: Install Dependencies via Frozen Lockfile
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      # Step 5: Verify Installed Dependencies
-      - name: Dependency Verification
-        run: bun pm ls
+      # Step 5: TypeScript Compilation Check
+      - name: TypeScript Verification
+        run: bun run typecheck
 
-      # Step 6: TypeScript & Lint Verification
-      - name: TypeScript & Lint Verification
+      # Step 6: Code Quality & Lint
+      - name: Lint Verification
         run: bun run lint
 
-      # Step 7: Production Build (Vite -> dist)
-      - name: Production Build
+      # Step 7: Production Vite Build
+      - name: Production Vite Build
         run: bun run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -58,12 +60,12 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_DATABASE_ID: ${{ secrets.VITE_FIREBASE_DATABASE_ID }}
 
-      # Step 8: Verify Build Artifacts & SPA Routing
+      # Step 8: Verify Production Build Artifacts & SPA Routing
       - name: Verify Build Artifacts
         run: |
-          echo "=== Verifying Build Directory ==="
+          echo "=== Verifying Build Artifacts in dist/ ==="
           if [ ! -d "dist" ]; then
-            echo "ERROR: Build output directory 'dist' was not found!"
+            echo "ERROR: Build directory 'dist' was not found!"
             exit 1
           fi
 
@@ -72,30 +74,34 @@ jobs:
             exit 1
           fi
 
-          if [ ! -f "dist/_redirects" ]; then
-            echo "ERROR: 'dist/_redirects' is missing (required for Cloudflare Pages SPA routing)!"
+          if [ ! -d "dist/assets" ]; then
+            echo "ERROR: 'dist/assets' directory is missing!"
             exit 1
           fi
 
-          echo "SUCCESS: Build directory verified with index.html, _redirects, _headers, and assets:"
+          if [ ! -f "dist/_redirects" ]; then
+            echo "ERROR: 'dist/_redirects' is missing for Cloudflare Pages SPA routing!"
+            exit 1
+          fi
+
+          echo "SUCCESS: Production build artifacts verified:"
           ls -la dist
 
-      # Step 9: Deploy to Cloudflare Pages
+      # Step 9: Deploy to Cloudflare Pages (When API Token is provided)
       - name: Deploy to Cloudflare Pages
         if: env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.147.0'
           command: pages deploy dist --project-name=digipack
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # Step 10: Informational notice when Cloudflare secrets are pending
+      # Step 10: Informational Notice (When Cloudflare Secrets are pending in GitHub)
       - name: Cloudflare Deployment Status
         if: env.CLOUDFLARE_API_TOKEN == ''
         run: |
-          echo "::notice ::Build, TypeScript validation, and asset verification completed successfully! To enable automatic edge deployment to Cloudflare Pages on push, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in your GitHub Repository > Settings > Secrets and variables > Actions."
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          echo "::notice ::CI build, TypeScript check, and asset verification succeeded with 0 errors! To activate automatic edge deployment to Cloudflare Pages on push, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID under GitHub Repository > Settings > Secrets and variables > Actions."

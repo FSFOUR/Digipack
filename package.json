@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
+    "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "deploy:pages": "wrangler pages deploy dist --project-name=digipack"
