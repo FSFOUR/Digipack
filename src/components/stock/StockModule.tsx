@@ -17,6 +17,7 @@ import {
   TrendingDown,
   Layers,
   Trash2,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const StockModule: React.FC = () => {
@@ -45,6 +46,8 @@ export const StockModule: React.FC = () => {
   const [showOutModal, setShowOutModal] = useState(false);
   const [stockToDelete, setStockToDelete] = useState<BoardStockItem | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(null);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -207,6 +210,24 @@ export const StockModule: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {/* Delete / Action Success Banner */}
+      {deleteSuccessMessage && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{deleteSuccessMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setDeleteSuccessMessage(null)}
+            className="text-emerald-700 hover:text-emerald-900 font-black text-sm px-1.5"
+            aria-label="Close notification"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Header & Quick Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-xl border border-neutral-200 shadow-xs">
         <div>
@@ -443,43 +464,43 @@ export const StockModule: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Actions buttons */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => {
-                        setSelectedStock(stock);
-                        setShowInModal(true);
-                      }}
-                      className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs"
-                      title="Stock IN"
-                    >
-                      <ArrowDownToLine className="w-3.5 h-3.5" /> IN
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setSelectedStock(stock);
-                        setShowOutModal(true);
-                      }}
-                      className="px-2.5 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs"
-                      title="Stock OUT"
-                    >
-                      <ArrowUpFromLine className="w-3.5 h-3.5" /> OUT
-                    </button>
-
-                    {role === 'OWNER / ADMIN' && (
+                    {/* Actions buttons */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
+                        onClick={() => {
+                          setSelectedStock(stock);
+                          setShowInModal(true);
+                        }}
+                        className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs"
+                        title="Stock IN (Receipt)"
+                      >
+                        <ArrowDownToLine className="w-3.5 h-3.5" /> IN
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSelectedStock(stock);
+                          setShowOutModal(true);
+                        }}
+                        className="px-2.5 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs"
+                        title="Stock OUT (Issue)"
+                      >
+                        <ArrowUpFromLine className="w-3.5 h-3.5" /> OUT
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => {
                           setStockToDelete(stock);
                           setDeleteError(null);
                         }}
-                        className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-neutral-200"
-                        title={`Delete ${stock.boardSize}`}
+                        className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-100/70 bg-rose-50 rounded-lg transition-colors border border-rose-200"
+                        title={`Delete size ${stock.boardSize}`}
+                        aria-label={`Delete board size ${stock.boardSize}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
-                  </div>
+                    </div>
                 </div>
               </div>
             );
@@ -612,18 +633,18 @@ export const StockModule: React.FC = () => {
                           <ArrowUpFromLine className="w-3 h-3" /> OUT
                         </button>
 
-                        {role === 'OWNER / ADMIN' && (
-                          <button
-                            onClick={() => {
-                              setStockToDelete(stock);
-                              setDeleteError(null);
-                            }}
-                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors ml-0.5"
-                            title={`Delete ${stock.boardSize} Master Size (Owner / Admin Only)`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStockToDelete(stock);
+                            setDeleteError(null);
+                          }}
+                          className="p-1 text-rose-600 hover:text-rose-700 hover:bg-rose-100/70 bg-rose-50/50 rounded transition-colors ml-0.5 border border-rose-200"
+                          title={`Delete size ${stock.boardSize}`}
+                          aria-label={`Delete board size ${stock.boardSize}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1002,39 +1023,68 @@ export const StockModule: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal (Owner/Admin Only) */}
+      {/* Delete Confirmation Modal */}
       {stockToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-neutral-200 p-5 text-neutral-900">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-neutral-200 p-5 text-neutral-900">
+            <div className="flex items-center gap-3 mb-3 pb-3 border-b border-neutral-100">
+              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-sm font-black text-neutral-900">
-                  Delete Board Size Master
+                  Delete Board Size: {stockToDelete.boardSize}
                 </h3>
                 <p className="text-[11px] text-neutral-500 font-semibold">
-                  Owner / Admin Authorization Required
+                  Stock Inventory Master Deletion
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-600 mb-4 leading-relaxed">
-              Are you sure you want to permanently delete board size{' '}
-              <strong className="text-neutral-900 font-black">{stockToDelete.boardSize}</strong> ({stockToDelete.length} × {stockToDelete.width} cm, {stockToDelete.ply || '3ply'}, {stockToDelete.gsm} GSM) from stock inventory?
-            </p>
+            <div className="space-y-3 mb-4 text-xs">
+              <p className="text-neutral-600 leading-relaxed">
+                Are you sure you want to permanently delete board size{' '}
+                <strong className="text-neutral-900 font-black">{stockToDelete.boardSize}</strong> from the stock database?
+              </p>
 
-            {deleteError && (
-              <div className="mb-3 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg font-semibold flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{deleteError}</span>
+              <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-200 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-neutral-500 font-medium">Dimensions:</span>
+                  <span className="font-bold text-neutral-800">{stockToDelete.length} × {stockToDelete.width} cm ({stockToDelete.ply || '3ply'})</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500 font-medium">GSM & Type:</span>
+                  <span className="font-bold text-neutral-800">{stockToDelete.gsm} GSM · {stockToDelete.boardType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500 font-medium">Available Stock:</span>
+                  <span className="font-bold text-neutral-800">{stockToDelete.availableQty.toLocaleString()} Sheets</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500 font-medium">Storage Location:</span>
+                  <span className="font-bold text-neutral-800">{stockToDelete.location}</span>
+                </div>
               </div>
-            )}
+
+              {stockToDelete.reservedQty > 0 && (
+                <div className="p-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg font-semibold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>Warning: {stockToDelete.reservedQty} sheets are currently reserved for pending jobs.</span>
+                </div>
+              )}
+
+              {deleteError && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg font-semibold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>{deleteError}</span>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
               <button
                 type="button"
+                disabled={isDeleting}
                 onClick={() => {
                   setStockToDelete(null);
                   setDeleteError(null);
@@ -1045,22 +1095,37 @@ export const StockModule: React.FC = () => {
               </button>
               <button
                 type="button"
+                disabled={isDeleting}
                 onClick={async () => {
                   try {
-                    if (role !== 'OWNER / ADMIN') {
-                      setDeleteError('Permission denied: Only Owner or Admin can delete.');
+                    setIsDeleting(true);
+                    setDeleteError(null);
+                    if (role === 'VIEW ONLY') {
+                      setDeleteError('Permission denied: View-only accounts cannot delete sizes.');
+                      setIsDeleting(false);
                       return;
                     }
+                    const sizeName = stockToDelete.boardSize;
                     await deleteStockItem(stockToDelete.id);
                     setStockToDelete(null);
-                    setDeleteError(null);
+                    setIsDeleting(false);
+                    setDeleteSuccessMessage(`Board size ${sizeName} was successfully deleted from inventory.`);
+                    setTimeout(() => setDeleteSuccessMessage(null), 4000);
                   } catch (err: any) {
+                    setIsDeleting(false);
                     setDeleteError(err.message || 'Failed to delete board size');
                   }
                 }}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-xs transition-colors"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-lg font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5"
               >
-                Yes, Delete Size
+                {isDeleting ? (
+                  <>Deleting...</>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Yes, Delete Size
+                  </>
+                )}
               </button>
             </div>
           </div>
