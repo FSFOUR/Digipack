@@ -1102,18 +1102,21 @@ export const StockModule: React.FC = () => {
                     setDeleteError(null);
                     if (role === 'VIEW ONLY') {
                       setDeleteError('Permission denied: View-only accounts cannot delete sizes.');
-                      setIsDeleting(false);
                       return;
                     }
                     const sizeName = stockToDelete.boardSize;
-                    await deleteStockItem(stockToDelete.id);
+                    const stockId = stockToDelete.id;
+                    await deleteStockItem(stockId);
                     setStockToDelete(null);
-                    setIsDeleting(false);
                     setDeleteSuccessMessage(`Board size ${sizeName} was successfully deleted from inventory.`);
-                    setTimeout(() => setDeleteSuccessMessage(null), 4000);
-                  } catch (err: any) {
+                    setTimeout(() => {
+                      setDeleteSuccessMessage((prev) => (prev?.includes(sizeName) ? null : prev));
+                    }, 4000);
+                  } catch (err: unknown) {
+                    const message = err instanceof Error ? err.message : 'Failed to delete board size';
+                    setDeleteError(message);
+                  } finally {
                     setIsDeleting(false);
-                    setDeleteError(err.message || 'Failed to delete board size');
                   }
                 }}
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-lg font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5"
