@@ -11,6 +11,7 @@ import {
   Navigation,
   Receipt,
   CreditCard,
+  UploadCloud,
   X,
 } from 'lucide-react';
 
@@ -37,6 +38,7 @@ export const QuickActionDrawer: React.FC<QuickActionDrawerProps> = ({
     { key: 'stock-in', label: 'Stock IN (Receive Board)', icon: ArrowDownToLine, color: 'text-teal-500' },
     { key: 'stock-out', label: 'Stock OUT (Issue Board)', icon: ArrowUpFromLine, color: 'text-rose-500' },
     { key: 'dispatch', label: 'New Dispatch Challan', icon: Navigation, color: 'text-indigo-500' },
+    { key: 'documents', label: 'Upload / View Documents', icon: UploadCloud, color: 'text-blue-500' },
     { key: 'invoice', label: 'Create Invoice', icon: Receipt, color: 'text-cyan-500' },
     { key: 'payment', label: 'Record Customer Payment', icon: CreditCard, color: 'text-emerald-500' },
   ];

@@ -22,6 +22,10 @@ jobs:
       contents: read
       deployments: write
 
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
     steps:
       # Step 1: Checkout Repository
       - name: Checkout Repository
@@ -51,7 +55,7 @@ jobs:
           echo "=== Top-level Installed Packages ==="
           npm list --depth=0
 
-      # Step 4: Lint Code
+      # Step 4: Lint & TypeScript Verification
       - name: Lint Code
         run: npm run lint
 
@@ -64,7 +68,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_DATABASE_ID: ${{ secrets.VITE_FIREBASE_DATABASE_ID }}
 
-      # Step 6: Verify Build Output
+      # Step 6: Verify Build Output & SPA Configs
       - name: Verify Build Artifacts
         run: |
           echo "=== Verifying Build Directory ==="
@@ -86,9 +90,15 @@ jobs:
           echo "SUCCESS: Build directory verified with index.html, _redirects, and assets:"
           ls -la dist
 
-      # Step 7: Deploy to Cloudflare Pages
+      # Step 7: Informational step if Cloudflare Token is not set
+      - name: Cloudflare Configuration Notice
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: |
+          echo "::notice ::CLOUDFLARE_API_TOKEN is not configured in GitHub Secrets. The build and validation completed with 0 errors! To enable automatic deployment to Cloudflare Pages on every push, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to your GitHub Repository > Settings > Secrets and variables > Actions."
+
+      # Step 8: Deploy to Cloudflare Pages (When credentials exist)
       - name: Deploy to Cloudflare Pages
-        if: github.event_name == 'push' && env.CLOUDFLARE_API_TOKEN != ''
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.CLOUDFLARE_API_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

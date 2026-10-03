@@ -31,6 +31,7 @@ export interface UserProfile {
   createdAt: string;
   approvedBy?: string;
   approvedAt?: string;
+  allowedPages?: string[]; // IDs of pages/modules this staff member is authorized to access and edit
 }
 
 export interface Customer {

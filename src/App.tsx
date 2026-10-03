@@ -22,13 +22,16 @@ import { JobCardModule } from './components/jobcard/JobCardModule';
 import { ProductionModule } from './components/production/ProductionModule';
 import { QcModule } from './components/qc/QcModule';
 import { DispatchModule } from './components/dispatch/DispatchModule';
+import { DocumentsModule } from './components/documents/DocumentsModule';
 import { InvoiceModule } from './components/accounts/InvoiceModule';
 import { PaymentModule } from './components/accounts/PaymentModule';
 import { ProfitabilityModule } from './components/profitability/ProfitabilityModule';
 import { HrModule } from './components/hr/HrModule';
 import { MachineModule } from './components/machines/MachineModule';
 import { ReportsModule } from './components/reports/ReportsModule';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AuditLogView } from './components/admin/AuditLogView';
+import { PasswordSecurityPage } from './components/auth/PasswordSecurityPage';
 
 const MainAppContent: React.FC = () => {
   const { profile, role, isApproved } = useAuth();
@@ -64,6 +67,7 @@ const MainAppContent: React.FC = () => {
     else if (actionKey === 'production') setActiveModule('production');
     else if (actionKey === 'stock-in' || actionKey === 'stock-out') setActiveModule('stock');
     else if (actionKey === 'dispatch') setActiveModule('dispatch');
+    else if (actionKey === 'documents') setActiveModule('documents');
     else if (actionKey === 'invoice') setActiveModule('invoices');
     else if (actionKey === 'payment') setActiveModule('payments');
   };
@@ -105,6 +109,7 @@ const MainAppContent: React.FC = () => {
           onOpenQuickAction={() => setQuickActionOpen(true)}
           onOpenUserApproval={() => setUserApprovalOpen(true)}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onOpenAuthModal={() => setAuthModalOpen(true)}
         />
 
         {/* Viewport Content */}
@@ -147,13 +152,18 @@ const MainAppContent: React.FC = () => {
           {activeModule === 'qc' && <QcModule />}
           {activeModule === 'finishedgoods' && <DispatchModule />}
           {activeModule === 'dispatch' && <DispatchModule />}
+          {activeModule === 'documents' && <DocumentsModule />}
           {activeModule === 'invoices' && <InvoiceModule />}
           {activeModule === 'payments' && <PaymentModule />}
           {activeModule === 'profitability' && <ProfitabilityModule />}
           {activeModule === 'hr' && <HrModule />}
           {activeModule === 'machines' && <MachineModule />}
           {activeModule === 'reports' && <ReportsModule />}
+          {activeModule === 'admin' && <AdminDashboard onNavigate={setActiveModule} />}
           {activeModule === 'audit' && <AuditLogView />}
+          {(activeModule === 'password-reset' || activeModule === 'security') && (
+            <PasswordSecurityPage onNavigate={setActiveModule} />
+          )}
         </main>
       </div>
 

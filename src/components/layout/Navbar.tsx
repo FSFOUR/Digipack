@@ -5,6 +5,9 @@ import {
   LogOut,
   UserCheck,
   Home,
+  Eye,
+  LogIn,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -13,13 +16,16 @@ interface NavbarProps {
   onOpenQuickAction: () => void;
   onOpenUserApproval: () => void;
   onToggleSidebar?: () => void;
+  onOpenAuthModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeModule,
+  onSelectModule,
   onOpenQuickAction,
   onOpenUserApproval,
   onToggleSidebar,
+  onOpenAuthModal,
 }) => {
   const { profile, role, logout, pendingUsersCount } = useAuth();
 
@@ -60,39 +66,64 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="hidden sm:inline">Actions</span>
         </button>
 
-        {/* User Approval quick link for Manager / Admin */}
+        {/* Admin Dashboard & Approvals quick link for Manager / Admin */}
         {(role === 'OWNER / ADMIN' || role === 'MANAGER') && (
           <button
-            onClick={onOpenUserApproval}
-            className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-neutral-800 transition-colors relative"
-            title="Manage Staff Accounts & Approvals"
+            onClick={() => onSelectModule('admin')}
+            className={`p-1.5 rounded-lg border transition-colors relative flex items-center gap-1.5 ${
+              activeModule === 'admin'
+                ? 'bg-red-600 text-white border-red-700'
+                : 'text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 border-neutral-700'
+            }`}
+            title="Admin Dashboard (User Activity & Approvals)"
           >
-            <UserCheck className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4 text-red-500" />
+            <span className="text-xs font-bold hidden sm:inline">Admin</span>
             {pendingUsersCount > 0 && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
             )}
           </button>
         )}
 
-        {/* Profile & Logout */}
-        <div className="flex items-center gap-2 pl-2 border-l border-neutral-800">
-          <div className="hidden xl:block text-right text-xs">
-            <span className="block font-bold text-white truncate max-w-[100px]">
-              {profile?.fullName || 'Shafi'}
+        {/* Guest Mode Status & Sign In OR Profile & Logout */}
+        {role === 'VIEW ONLY' ? (
+          <div className="flex items-center gap-2 pl-2 border-l border-neutral-800">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/70 text-cyan-400 border border-cyan-800/80 text-[11px] font-semibold">
+              <Eye className="w-3.5 h-3.5" />
+              <span>Guest (View Only)</span>
             </span>
-            <span className="block text-[10px] text-neutral-400">
-              {profile?.department || 'Operations'}
-            </span>
-          </div>
 
-          <button
-            onClick={() => logout()}
-            className="p-1.5 text-neutral-400 hover:text-red-400 rounded hover:bg-neutral-800 transition-colors"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
+            {onOpenAuthModal && (
+              <button
+                onClick={onOpenAuthModal}
+                className="px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 shadow-xs"
+                title="Sign in as Admin or Staff"
+              >
+                <LogIn className="w-3.5 h-3.5 text-red-500" />
+                <span>Sign In</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 pl-2 border-l border-neutral-800">
+            <div className="hidden xl:block text-right text-xs">
+              <span className="block font-bold text-white truncate max-w-[120px]">
+                {profile?.fullName || 'Admin'}
+              </span>
+              <span className="block text-[10px] text-neutral-400">
+                {profile?.role || 'Staff'}
+              </span>
+            </div>
+
+            <button
+              onClick={() => logout()}
+              className="p-1.5 text-neutral-400 hover:text-red-400 rounded-lg hover:bg-neutral-800 transition-colors"
+              title="Sign Out to Guest Mode"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

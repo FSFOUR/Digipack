@@ -7,11 +7,26 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updatePassword,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { UserProfile, UserRole } from '../types/erp';
 import { DEFAULT_ADMIN_PROFILE } from '../data/seedData';
+
+export const GUEST_VIEW_ONLY_PROFILE: UserProfile = {
+  uid: 'guest-view-only',
+  staffId: 'DP-GUEST-01',
+  fullName: 'Guest User (View Only)',
+  email: 'guest@digipack.com',
+  mobileNumber: '+91 8590 046 637',
+  department: 'Visitor',
+  designation: 'Guest Mode (View Only)',
+  role: 'VIEW ONLY',
+  status: 'ACTIVE',
+  createdAt: new Date().toISOString(),
+};
 
 interface AuthContextType {
   user: User | null;
@@ -33,7 +48,10 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => Promise<void>;
   switchRoleForDemo: (role: UserRole) => void;
+  switchActiveProfile: (profile: UserProfile) => void;
   updateUserStatus: (uid: string, status: UserProfile['status'], newRole?: UserRole) => Promise<void>;
+  changePassword: (newPassword: string) => Promise<{ success: boolean; message: string }>;
+  sendResetEmail: (email?: string) => Promise<{ success: boolean; message: string }>;
   pendingUsersCount: number;
 }
 
@@ -105,8 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } else {
-        // Fallback for default session when running without prompt login
-        setProfile(DEFAULT_ADMIN_PROFILE);
+        // App defaults to Guest Mode (View Only) for all visitors as requested
+        setProfile(GUEST_VIEW_ONLY_PROFILE);
       }
       setLoading(false);
     });
@@ -208,10 +226,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ignore
     }
     setUser(null);
-    setProfile(null);
+    setProfile(GUEST_VIEW_ONLY_PROFILE);
   };
 
   const switchRoleForDemo = (newRole: UserRole) => {
+    if (newRole === 'VIEW ONLY') {
+      setProfile(GUEST_VIEW_ONLY_PROFILE);
+      return;
+    }
+    if (newRole === 'OWNER / ADMIN') {
+      setProfile(DEFAULT_ADMIN_PROFILE);
+      return;
+    }
     if (profile) {
       setProfile({
         ...profile,
@@ -223,6 +249,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...DEFAULT_ADMIN_PROFILE,
         role: newRole,
       });
+    }
+  };
+
+  const switchActiveProfile = (newProfile: UserProfile) => {
+    setProfile(newProfile);
+    try {
+      localStorage.setItem('digipack_active_user_profile', JSON.stringify(newProfile));
+    } catch {
+      // Ignore
     }
   };
 
@@ -249,7 +284,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const currentRole = profile?.role || 'OWNER / ADMIN';
+  const changePassword = async (newPassword: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, newPassword);
+        return { success: true, message: 'Password updated successfully in secure authentication.' };
+      }
+      return { success: true, message: 'Password updated successfully for ' + (profile?.fullName || 'staff') };
+    } catch (err: any) {
+      if (err?.code === 'auth/requires-recent-login') {
+        return { success: false, message: 'Security verification: Please sign in again before updating your password.' };
+      }
+      return { success: false, message: err?.message || 'Failed to update password.' };
+    }
+  };
+
+  const sendResetEmail = async (emailToReset?: string): Promise<{ success: boolean; message: string }> => {
+    const targetEmail = emailToReset || profile?.email;
+    if (!targetEmail) {
+      return { success: false, message: 'No email address found for this user.' };
+    }
+    try {
+      await sendPasswordResetEmail(auth, targetEmail);
+      return { success: true, message: `Password reset link sent to ${targetEmail}. Check your inbox.` };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Failed to send reset email.' };
+    }
+  };
+
+  const currentRole = profile?.role || 'VIEW ONLY';
   const isApproved = profile?.status === 'ACTIVE';
   const isAdminOrManager =
     currentRole === 'OWNER / ADMIN' || currentRole === 'MANAGER';
@@ -268,7 +331,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         registerStaffAccount,
         logout,
         switchRoleForDemo,
+        switchActiveProfile,
         updateUserStatus,
+        changePassword,
+        sendResetEmail,
         pendingUsersCount,
       }}
     >

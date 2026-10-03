@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useErp } from '../../context/ErpDataContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   TrendingUp,
   AlertTriangle,
@@ -15,6 +16,8 @@ import {
   ArrowUpRight,
   Wrench,
   Users,
+  Eye,
+  X,
 } from 'lucide-react';
 
 interface MisDashboardProps {
@@ -22,6 +25,8 @@ interface MisDashboardProps {
 }
 
 export const MisDashboard: React.FC<MisDashboardProps> = ({ onNavigate }) => {
+  const { role } = useAuth();
+  const [showGuestNotice, setShowGuestNotice] = useState(true);
   const {
     enquiries,
     quotations,
@@ -129,6 +134,32 @@ export const MisDashboard: React.FC<MisDashboardProps> = ({ onNavigate }) => {
 
   return (
     <div className="space-y-6">
+      {/* Guest Mode Explorer Notification */}
+      {role === 'VIEW ONLY' && showGuestNotice && (
+        <div className="bg-gradient-to-r from-blue-900/90 to-neutral-900 border border-blue-700/60 rounded-xl p-3.5 sm:p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-400/40 text-blue-300 flex items-center justify-center shrink-0">
+              <Eye className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                <span>Welcome to DIGI PACK ERP — Guest Mode (View Only)</span>
+              </p>
+              <p className="text-[11px] sm:text-xs text-blue-200/80 mt-0.5">
+                All manufacturing modules, 2D cutting visualizer, stock search, job cards, documents, and reports are fully functional to explore on all devices.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowGuestNotice(false)}
+            className="self-end sm:self-center text-xs text-blue-300 hover:text-white px-2.5 py-1 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Dismiss</span>
+          </button>
+        </div>
+      )}
+
       {/* Top Banner / Welcome */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

@@ -128,6 +128,8 @@ interface ErpContextType {
   exportStockToCSV: () => void;
   importStockFromData: (items: Partial<BoardStockItem>[]) => Promise<number>;
   resetToDefaultSeedData: () => void;
+  clearAllErpData: (wipeType?: 'all' | 'transactions_only' | 'audit_only') => void;
+  restoreFromBackup: (backupObject: any) => boolean;
 }
 
 const ErpContext = createContext<ErpContextType | undefined>(undefined);
@@ -1521,6 +1523,110 @@ export const ErpDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     window.location.reload();
   };
 
+  const clearAllErpData = (wipeType: 'all' | 'transactions_only' | 'audit_only' = 'all') => {
+    if (wipeType === 'audit_only') {
+      setAuditLogs([]);
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_audit');
+      return;
+    }
+
+    if (wipeType === 'transactions_only') {
+      setQuotations([]);
+      setEnquiries([]);
+      setSalesOrders([]);
+      setJobCards([]);
+      setProductionLogs([]);
+      setDispatches([]);
+      setInvoices([]);
+      setPayments([]);
+      setStockTransactions([]);
+      setQcRecords([]);
+      setFinishedGoods([]);
+      setMaterialRequirements([]);
+      setPurchaseOrders([]);
+      setAuditLogs([]);
+
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_quotations');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_enquiries');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_orders');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_job_cards');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_prod_logs');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_dispatches');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_invoices');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_payments');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_stock_tx');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_qc');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_fg');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_mats');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_pos');
+      localStorage.removeItem(LOCAL_STORAGE_KEY + '_audit');
+      return;
+    }
+
+    // wipeType === 'all'
+    setCustomers([]);
+    setBoardStocks([]);
+    setStockTransactions([]);
+    setEnquiries([]);
+    setQuotations([]);
+    setSalesOrders([]);
+    setMaterialRequirements([]);
+    setPurchaseOrders([]);
+    setJobCards([]);
+    setProductionLogs([]);
+    setQcRecords([]);
+    setFinishedGoods([]);
+    setDispatches([]);
+    setInvoices([]);
+    setPayments([]);
+    setAttendance([]);
+    setAuditLogs([]);
+
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_customers');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_stocks');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_stock_tx');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_enquiries');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_quotations');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_orders');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_mats');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_pos');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_job_cards');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_prod_logs');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_qc');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_fg');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_dispatches');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_invoices');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_payments');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_attendance');
+    localStorage.removeItem(LOCAL_STORAGE_KEY + '_audit');
+  };
+
+  const restoreFromBackup = (backupObject: any): boolean => {
+    try {
+      const data = backupObject.data || backupObject;
+      if (data.customers && Array.isArray(data.customers)) setCustomers(data.customers);
+      if (data.boardStocks && Array.isArray(data.boardStocks)) setBoardStocks(data.boardStocks);
+      if (data.stockTransactions && Array.isArray(data.stockTransactions)) setStockTransactions(data.stockTransactions);
+      if (data.enquiries && Array.isArray(data.enquiries)) setEnquiries(data.enquiries);
+      if (data.quotations && Array.isArray(data.quotations)) setQuotations(data.quotations);
+      if (data.salesOrders && Array.isArray(data.salesOrders)) setSalesOrders(data.salesOrders);
+      if (data.materialRequirements && Array.isArray(data.materialRequirements)) setMaterialRequirements(data.materialRequirements);
+      if (data.purchaseOrders && Array.isArray(data.purchaseOrders)) setPurchaseOrders(data.purchaseOrders);
+      if (data.jobCards && Array.isArray(data.jobCards)) setJobCards(data.jobCards);
+      if (data.productionLogs && Array.isArray(data.productionLogs)) setProductionLogs(data.productionLogs);
+      if (data.qcRecords && Array.isArray(data.qcRecords)) setQcRecords(data.qcRecords);
+      if (data.finishedGoods && Array.isArray(data.finishedGoods)) setFinishedGoods(data.finishedGoods);
+      if (data.dispatches && Array.isArray(data.dispatches)) setDispatches(data.dispatches);
+      if (data.invoices && Array.isArray(data.invoices)) setInvoices(data.invoices);
+      if (data.payments && Array.isArray(data.payments)) setPayments(data.payments);
+      if (data.auditLogs && Array.isArray(data.auditLogs)) setAuditLogs(data.auditLogs);
+      return true;
+    } catch (e) {
+      console.error('Failed to restore backup', e);
+      return false;
+    }
+  };
+
   return (
     <ErpContext.Provider
       value={{
@@ -1577,6 +1683,8 @@ export const ErpDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         exportStockToCSV,
         importStockFromData,
         resetToDefaultSeedData,
+        clearAllErpData,
+        restoreFromBackup,
       }}
     >
       {children}

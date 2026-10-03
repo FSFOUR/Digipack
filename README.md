@@ -4,72 +4,90 @@ DIGI PACK ERP is a production-grade Manufacturing ERP & MIS application designed
 
 ---
 
-## 🚀 Quick Deployment to Cloudflare Pages
+## 🚀 GitHub & Cloudflare Deployment Guide
 
-### Option 1: Automatic Deployment via Cloudflare Pages Dashboard (Recommended)
+The repository is pre-configured for seamless automated deployment to **Cloudflare Pages** and **Cloudflare Workers (with Assets)** via GitHub Actions.
+
+### Method 1: Automated Deployment via GitHub Actions (CI/CD)
+
+Whenever you push to `main` or `master`, the `.github/workflows/deploy.yml` pipeline will:
+1. Validate TypeScript and Linting (`npm run lint`).
+2. Build production assets (`npm run build`).
+3. Verify client-side SPA routing (`dist/_redirects`, `dist/_headers`, and `dist/index.html`).
+4. Automatically deploy to Cloudflare Pages.
+
+#### Adding Cloudflare Credentials to GitHub:
+In your GitHub repository:
+1. Navigate to **Settings** > **Secrets and variables** > **Actions**.
+2. Click **New repository secret**:
+   - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API Token (Permissions: `Cloudflare Pages: Edit` or `Account: Cloudflare Pages: Edit`).
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID (Found in your Cloudflare dashboard sidebar).
+3. *(Optional)* If overriding Firebase variables:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_APP_ID`
+   - `VITE_FIREBASE_DATABASE_ID`
+
+---
+
+### Method 2: Direct Git Integration via Cloudflare Pages Dashboard
 
 1. **Push your code to GitHub**:
    ```bash
    git init
    git add .
-   git commit -m "feat: initial commit of DIGI PACK ERP"
+   git commit -m "feat: complete DIGI PACK ERP with Cloudflare support"
    git branch -M main
    git remote add origin https://github.com/<your-username>/<your-repo-name>.git
    git push -u origin main
    ```
 
-2. **Log into Cloudflare Dashboard**:
-   - Go to [dash.cloudflare.com](https://dash.cloudflare.com)
-   - Navigate to **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**
-   - Select your GitHub repository.
+2. **Connect in Cloudflare**:
+   - Go to [dash.cloudflare.com](https://dash.cloudflare.com).
+   - Click **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
+   - Select your repository.
 
-3. **Configure Build Settings**:
+3. **Build Configuration**:
    - **Framework preset**: `Vite`
    - **Build command**: `npm run build`
    - **Build output directory**: `dist`
    - **Root directory**: `/` (leave blank)
 
-4. **Environment Variables (Optional)**:
-   The app includes preconfigured Firebase credentials in `firebase-applet-config.json`. If you prefer to override them with your own Firebase project:
-   - `VITE_FIREBASE_API_KEY`: Your Firebase Web API Key
-   - `VITE_FIREBASE_PROJECT_ID`: Your Firebase Project ID
-   - `VITE_FIREBASE_APP_ID`: Your Firebase App ID
-   - `VITE_FIREBASE_AUTH_DOMAIN`: `your-project.firebaseapp.com`
-   - `VITE_FIREBASE_DATABASE_ID`: Your Firestore Database ID
-
-5. **Click Save and Deploy**:
-   Cloudflare Pages will build the application and deploy it to `https://<your-project>.pages.dev` in less than 60 seconds!
+4. **Click Save and Deploy**:
+   Cloudflare will automatically compile and distribute your app globally across edge nodes in seconds.
 
 ---
 
-### Option 2: Deploying via Cloudflare Wrangler CLI
+### Method 3: Deploy via Wrangler CLI
+
+You can also deploy directly from your local terminal:
 
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Build the production bundle
+# 2. Build production bundle
 npm run build
 
-# 3. Deploy dist to Cloudflare Pages
-npx wrangler pages deploy dist --project-name=digipack-erp
+# 3. Deploy to Cloudflare Pages
+npm run deploy:pages
+
+# OR deploy as Cloudflare Worker with Assets
+npm run deploy
 ```
 
 ---
 
-## 🛠️ Local Development
+## 🛠️ Local Development & Scripts
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
+# Start local dev server (port 3000)
 npm run dev
 
-# Lint and check TypeScript
+# Lint & TypeScript validation
 npm run lint
 
-# Build production bundle
+# Compile production bundle
 npm run build
 
 # Preview production build locally
@@ -80,7 +98,8 @@ npm run preview
 
 ## 📁 Key Files for Cloudflare & GitHub
 
-- `public/_redirects`: Directs all routes to `index.html` with a 200 HTTP code so single-page routing never throws 404 on page refresh.
-- `public/_headers`: Enforces security headers (`X-Frame-Options`, `X-Content-Type-Options`) and caching for `/assets/*`.
-- `vite.config.ts`: Configured with manual chunking for optimal CDN performance and fast page load times.
-- `.github/workflows/deploy.yml`: Automated GitHub Action to lint, build, and deploy.
+- `public/_redirects`: Directs all incoming URLs (`/* /index.html 200`) so deep links and page refreshes never throw 404 errors.
+- `public/_headers`: Injects security headers (`X-Frame-Options`, `X-Content-Type-Options`) and caching for `/assets/*`.
+- `wrangler.toml`: Configured with `[assets]` and `not_found_handling = "single-page-application"`.
+- `firebase-applet-config.json`: Embedded fallback configuration ensuring the app works immediately even before Cloudflare environment variables are set.
+- `.github/workflows/deploy.yml`: Production GitHub Actions workflow with linting, building, and Cloudflare Pages deployment.
