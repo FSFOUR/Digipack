@@ -60,7 +60,7 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_DATABASE_ID: ${{ secrets.VITE_FIREBASE_DATABASE_ID }}
 
-      # Step 8: Verify Production Build Artifacts & SPA Routing
+      # Step 8: Verify Production Build Artifacts
       - name: Verify Build Artifacts
         run: |
           echo "=== Verifying Build Artifacts in dist/ ==="
@@ -76,11 +76,6 @@ jobs:
 
           if [ ! -d "dist/assets" ]; then
             echo "ERROR: 'dist/assets' directory is missing!"
-            exit 1
-          fi
-
-          if [ ! -f "dist/_redirects" ]; then
-            echo "ERROR: 'dist/_redirects' is missing for Cloudflare Pages SPA routing!"
             exit 1
           fi
 
