@@ -1097,13 +1097,14 @@ export const StockModule: React.FC = () => {
                 type="button"
                 disabled={isDeleting}
                 onClick={async () => {
+                  if (isDeleting) return;
+                  if (role === 'VIEW ONLY') {
+                    setDeleteError('Permission denied: View-only accounts cannot delete sizes.');
+                    return;
+                  }
                   try {
                     setIsDeleting(true);
                     setDeleteError(null);
-                    if (role === 'VIEW ONLY') {
-                      setDeleteError('Permission denied: View-only accounts cannot delete sizes.');
-                      return;
-                    }
                     const sizeName = stockToDelete.boardSize;
                     const stockId = stockToDelete.id;
                     await deleteStockItem(stockId);
