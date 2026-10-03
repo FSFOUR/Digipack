@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useErp } from '../../context/ErpDataContext';
 import { useAuth } from '../../context/AuthContext';
 import { BoardStockItem } from '../../types/erp';
@@ -48,6 +48,15 @@ export const StockModule: React.FC = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -1110,7 +1119,10 @@ export const StockModule: React.FC = () => {
                     await deleteStockItem(stockId);
                     setStockToDelete(null);
                     setDeleteSuccessMessage(`Board size ${sizeName} was successfully deleted from inventory.`);
-                    setTimeout(() => {
+                    if (toastTimerRef.current) {
+                      clearTimeout(toastTimerRef.current);
+                    }
+                    toastTimerRef.current = setTimeout(() => {
                       setDeleteSuccessMessage((prev) => (prev?.includes(sizeName) ? null : prev));
                     }, 4000);
                   } catch (err: unknown) {
