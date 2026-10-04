@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useErp } from '../../context/ErpDataContext';
 import { OrderProfitability } from '../../types/erp';
 import {
@@ -9,9 +10,12 @@ import {
   BarChart,
   Layers,
   ArrowUpRight,
+  Eye,
 } from 'lucide-react';
 
 export const ProfitabilityModule: React.FC = () => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const { jobCards, salesOrders, invoices } = useErp();
 
   // Compute order profitability for all active and completed job cards
@@ -86,6 +90,13 @@ export const ProfitabilityModule: React.FC = () => {
             Real-time Gross Profit Margin % per Job Card · Raw Materials + Processing + Overhead breakdown
           </p>
         </div>
+
+        {isGuest && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold self-start sm:self-auto">
+            <Eye className="w-3.5 h-3.5 text-amber-600" />
+            <span>Guest View-Only</span>
+          </div>
+        )}
       </div>
 
       {/* Snapshot Cards */}

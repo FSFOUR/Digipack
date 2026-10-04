@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useErp } from '../../context/ErpDataContext';
 import { JobCard } from '../../types/erp';
 import { StatusBadge } from '../common/StatusBadge';
@@ -13,6 +14,7 @@ import {
   Clock,
   Layers,
   Wrench,
+  Lock,
 } from 'lucide-react';
 
 interface JobCardModuleProps {
@@ -20,6 +22,8 @@ interface JobCardModuleProps {
 }
 
 export const JobCardModule: React.FC<JobCardModuleProps> = ({ onNavigateToProduction }) => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const { jobCards, salesOrders, createManualJobCard, updateJobCard } = useErp();
 
   const [selectedJobCard, setSelectedJobCard] = useState<JobCard | null>(null);
@@ -91,10 +95,23 @@ export const JobCardModule: React.FC<JobCardModuleProps> = ({ onNavigateToProduc
         <div className="flex items-center gap-2">
           {viewMode === 'LIST' ? (
             <button
-              onClick={() => setViewMode('FORM')}
-              className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs"
+              onClick={() => {
+                if (isGuest) {
+                  alert('Action locked: Creating job cards is disabled in Guest (View Only) mode.');
+                  return;
+                }
+                setViewMode('FORM');
+              }}
+              disabled={isGuest}
+              className={`px-3.5 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs ${
+                isGuest
+                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+              title={isGuest ? 'Locked in Guest Mode' : 'Create New Job Card'}
             >
-              <Plus className="w-4 h-4" /> Create New Job Card
+              {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <Plus className="w-4 h-4" />}
+              <span>Create New Job Card</span>
             </button>
           ) : (
             <button

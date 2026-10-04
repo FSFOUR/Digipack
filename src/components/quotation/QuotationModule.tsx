@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useErp } from '../../context/ErpDataContext';
 import { Quotation, QuotationItem } from '../../types/erp';
 import { StatusBadge } from '../common/StatusBadge';
@@ -14,6 +15,7 @@ import {
   Copy,
   ChevronRight,
   CheckCircle2,
+  Lock,
 } from 'lucide-react';
 
 interface QuotationModuleProps {
@@ -21,6 +23,8 @@ interface QuotationModuleProps {
 }
 
 export const QuotationModule: React.FC<QuotationModuleProps> = ({ onNavigateToOrders }) => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const {
     quotations,
     customers,
@@ -250,10 +254,23 @@ export const QuotationModule: React.FC<QuotationModuleProps> = ({ onNavigateToOr
         <div className="flex items-center gap-2">
           {viewMode === 'LIST' ? (
             <button
-              onClick={() => setViewMode('FORM')}
-              className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs"
+              onClick={() => {
+                if (isGuest) {
+                  alert('Action locked: Creating quotations is disabled in Guest (View Only) mode.');
+                  return;
+                }
+                setViewMode('FORM');
+              }}
+              disabled={isGuest}
+              className={`px-3.5 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs ${
+                isGuest
+                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+              title={isGuest ? 'Locked in Guest Mode' : 'Create New Quotation'}
             >
-              <Plus className="w-4 h-4" /> Create New Quotation
+              {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <Plus className="w-4 h-4" />}
+              <span>Create New Quotation</span>
             </button>
           ) : (
             <button

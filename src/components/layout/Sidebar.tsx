@@ -200,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               title={item.label}
             >
               <Icon className="w-4 h-4 shrink-0 transition-transform duration-150" />
-              <span className="whitespace-nowrap overflow-hidden text-left">
+              <span className="whitespace-nowrap overflow-hidden text-left flex-1">
                 {item.label}
               </span>
             </button>
@@ -328,7 +328,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </span>
             </div>
 
-            <div className="max-h-60 overflow-y-auto py-1 space-y-1">
+            <div className="max-h-60 overflow-y-auto custom-scrollbar py-1 space-y-1 pr-1">
               {approvedStaff.map((staff) => {
                 const isCurrent =
                   (profile?.uid && profile.uid === staff.uid) ||

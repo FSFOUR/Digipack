@@ -13,6 +13,7 @@ import {
   MapPin,
   Phone,
   User,
+  Lock,
 } from 'lucide-react';
 
 export const DispatchModule: React.FC = () => {
@@ -25,7 +26,8 @@ export const DispatchModule: React.FC = () => {
     createDispatch,
     updateDispatchStatus,
   } = useErp();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
 
   const [activeTab, setActiveTab] = useState<'DISPATCHES' | 'FINISHED_GOODS'>('DISPATCHES');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -105,10 +107,23 @@ export const DispatchModule: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setShowAddModal(true)}
-            className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs"
+            onClick={() => {
+              if (isGuest) {
+                alert('Action locked: Creating dispatch challans is disabled in Guest (View Only) mode.');
+                return;
+              }
+              setShowAddModal(true);
+            }}
+            disabled={isGuest}
+            className={`px-3.5 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs ${
+              isGuest
+                ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+            }`}
+            title={isGuest ? 'Locked in Guest Mode' : 'New Dispatch Challan'}
           >
-            <Plus className="w-4 h-4" /> New Dispatch Challan
+            {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <Plus className="w-4 h-4" />}
+            <span>New Dispatch Challan</span>
           </button>
         </div>
       </div>
@@ -172,16 +187,40 @@ export const DispatchModule: React.FC = () => {
                     {d.status !== 'POD_RECEIVED' && d.status !== 'DELIVERED' ? (
                       <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
                         <button
-                          onClick={() => updateDispatchStatus(d.id, 'DISPATCHED')}
-                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs"
+                          onClick={() => {
+                            if (isGuest) {
+                              alert('Action locked in Guest (View Only) mode.');
+                              return;
+                            }
+                            updateDispatchStatus(d.id, 'DISPATCHED');
+                          }}
+                          disabled={isGuest}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1 ${
+                            isGuest
+                              ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                              : 'bg-amber-600 hover:bg-amber-700 text-white'
+                          }`}
                         >
-                          Mark Out
+                          {isGuest && <Lock className="w-3.5 h-3.5 text-amber-600" />}
+                          <span>Mark Out</span>
                         </button>
                         <button
-                          onClick={() => setPodModalRecord(d)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs"
+                          onClick={() => {
+                            if (isGuest) {
+                              alert('Action locked in Guest (View Only) mode.');
+                              return;
+                            }
+                            setPodModalRecord(d);
+                          }}
+                          disabled={isGuest}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1 ${
+                            isGuest
+                              ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
                         >
-                          Record POD
+                          {isGuest && <Lock className="w-3.5 h-3.5 text-amber-600" />}
+                          <span>Record POD</span>
                         </button>
                       </div>
                     ) : (
@@ -239,16 +278,40 @@ export const DispatchModule: React.FC = () => {
                         {d.status !== 'POD_RECEIVED' && d.status !== 'DELIVERED' ? (
                           <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={() => updateDispatchStatus(d.id, 'DISPATCHED')}
-                              className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-bold"
+                              onClick={() => {
+                                if (isGuest) {
+                                  alert('Action locked in Guest (View Only) mode.');
+                                  return;
+                                }
+                                updateDispatchStatus(d.id, 'DISPATCHED');
+                              }}
+                              disabled={isGuest}
+                              className={`px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1 ${
+                                isGuest
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                                  : 'bg-amber-600 hover:bg-amber-700 text-white'
+                              }`}
                             >
-                              Mark Out
+                              {isGuest && <Lock className="w-3 h-3 text-amber-600" />}
+                              <span>Mark Out</span>
                             </button>
                             <button
-                              onClick={() => setPodModalRecord(d)}
-                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-bold"
+                              onClick={() => {
+                                if (isGuest) {
+                                  alert('Action locked in Guest (View Only) mode.');
+                                  return;
+                                }
+                                setPodModalRecord(d);
+                              }}
+                              disabled={isGuest}
+                              className={`px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1 ${
+                                isGuest
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              }`}
                             >
-                              Record POD
+                              {isGuest && <Lock className="w-3 h-3 text-amber-600" />}
+                              <span>Record POD</span>
                             </button>
                           </div>
                         ) : (

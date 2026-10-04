@@ -18,7 +18,7 @@ export const DigiPackLogo: React.FC<DigiPackLogoProps> = ({
   };
 
   return (
-    <div className={`flex items-center gap-1.5 select-none font-black tracking-tight ${fontSizes[size]} ${className}`}>
+    <div className={`flex items-center gap-0.5 select-none font-black tracking-tight uppercase ${fontSizes[size]} ${className}`}>
       <span className="text-red-600">DIGI</span>
       <span className="text-current">PACK</span>
     </div>

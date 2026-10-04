@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { DigiPackLogo } from '../common/DigiPackLogo';
 import { UserRole } from '../../types/erp';
@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 
 interface AuthModalProps {
@@ -42,6 +43,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [department, setDepartment] = useState('Production');
   const [designation, setDesignation] = useState('Machine Operator');
   const [signupSuccess, setSignupSuccess] = useState(false);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -84,18 +97,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-neutral-300 overflow-hidden text-neutral-900">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 cursor-pointer"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-neutral-300 overflow-hidden text-neutral-900 max-h-[90vh] flex flex-col relative cursor-default"
+      >
         {/* Header */}
-        <div className="p-6 bg-black text-white text-center border-b border-neutral-800">
+        <div className="p-6 bg-black text-white text-center border-b border-neutral-800 relative">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            title="Close / Dismiss"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <div className="flex justify-center mb-3">
             <DigiPackLogo size="lg" />
           </div>
-          <h2 className="text-base font-black tracking-wide text-white uppercase">
-            Duplex Master Box Manufacturing ERP
+          <h2 className="text-lg font-black tracking-wide text-white uppercase">
+            DIGIPACK
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
-            Kakkanchery, Malappuram · Secure Staff Authentication & Authorization
+            Secure Staff Authentication & Authorization
           </p>
         </div>
 
@@ -127,17 +157,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Form Content */}
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
           {mode === 'LOGIN' ? (
             <form onSubmit={handleLogin} className="space-y-4 text-xs">
-              {/* Credentials hint */}
-              <div className="p-2.5 bg-neutral-100 border border-neutral-300 rounded-lg text-neutral-800 text-[11px] flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-red-600 block">Owner / Admin Access:</span>
-                  <span>User name: <code className="font-mono font-bold bg-white px-1 py-0.5 rounded border border-neutral-300">admin</code> · Password: <code className="font-mono font-bold bg-white px-1 py-0.5 rounded border border-neutral-300">Digipack@2026</code></span>
-                </div>
-              </div>
-
               {loginError && (
                 <div className="p-2.5 bg-rose-50 border border-rose-300 rounded-lg text-rose-700 text-xs font-semibold flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />

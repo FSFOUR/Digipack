@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   FileQuestion,
   FileText,
@@ -13,6 +14,7 @@ import {
   CreditCard,
   UploadCloud,
   X,
+  Lock,
 } from 'lucide-react';
 
 interface QuickActionDrawerProps {
@@ -26,7 +28,10 @@ export const QuickActionDrawer: React.FC<QuickActionDrawerProps> = ({
   onClose,
   onSelectAction,
 }) => {
+  const { role } = useAuth();
   if (!isOpen) return null;
+
+  const isGuest = role === 'VIEW ONLY';
 
   const actions = [
     { key: 'new-enquiry', label: 'New Customer Enquiry', icon: FileQuestion, color: 'text-blue-500' },
@@ -44,15 +49,27 @@ export const QuickActionDrawer: React.FC<QuickActionDrawerProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4">
-      <div className="w-full max-w-lg bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl p-5 text-white max-h-[85vh] overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4 cursor-pointer"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl p-5 text-white max-h-[85vh] overflow-y-auto cursor-default"
+      >
         <div className="flex items-center justify-between border-b border-neutral-800 pb-3 mb-4">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <span className="w-2.5 h-2.5 bg-red-600 rounded-full"></span>
-              DIGI PACK Quick Actions
+              Digipack Quick Actions
             </h3>
-            <p className="text-xs text-neutral-400">One-tap manufacturing workflow actions</p>
+            <p className="text-xs text-neutral-400">
+              {isGuest
+                ? 'Guest Mode: Explore workflows in view-only mode (creation actions locked)'
+                : 'One-tap manufacturing workflow actions'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -61,6 +78,13 @@ export const QuickActionDrawer: React.FC<QuickActionDrawerProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {isGuest && (
+          <div className="mb-3 p-2.5 bg-amber-950/60 border border-amber-800/80 rounded-lg flex items-center gap-2 text-xs text-amber-300">
+            <Lock className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>You are currently a Guest. You can navigate and inspect modules; creating new records is locked.</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {actions.map((act) => {
@@ -77,9 +101,11 @@ export const QuickActionDrawer: React.FC<QuickActionDrawerProps> = ({
                 <div className={`p-2 rounded bg-neutral-900 group-hover:scale-105 transition-transform ${act.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-semibold text-neutral-200 group-hover:text-white">
-                  {act.label}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-neutral-200 group-hover:text-white block truncate">
+                    {act.label}
+                  </span>
+                </div>
               </button>
             );
           })}

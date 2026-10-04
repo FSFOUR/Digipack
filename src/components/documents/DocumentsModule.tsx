@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   UploadCloud,
   Search,
@@ -17,6 +18,7 @@ import {
   CheckCircle,
   HardDrive,
   Plus,
+  Lock,
 } from 'lucide-react';
 import { CompanyDocument, DocumentFolder, DocumentType } from '../../types/documents';
 import { INITIAL_DOCUMENT_FOLDERS } from '../../data/documentSeedData';
@@ -28,6 +30,8 @@ const STORAGE_KEY = 'digipack_documents_records_v2';
 const LEGACY_STORAGE_KEY = 'digipack_documents_records_v1';
 
 export const DocumentsModule: React.FC = () => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   // Folders state
   const [folders] = useState<DocumentFolder[]>(INITIAL_DOCUMENT_FOLDERS);
 
@@ -230,10 +234,22 @@ export const DocumentsModule: React.FC = () => {
         {/* Primary Action Button: "Upload Document" */}
         <div className="flex items-center gap-2.5 shrink-0">
           <button
-            onClick={() => setUploadModalOpen(true)}
-            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-red-950/20 transition-all flex items-center gap-2 select-none"
+            onClick={() => {
+              if (isGuest) {
+                alert('Action locked: Document upload is disabled in Guest (View Only) mode.');
+                return;
+              }
+              setUploadModalOpen(true);
+            }}
+            disabled={isGuest}
+            className={`px-5 py-2.5 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 select-none ${
+              isGuest
+                ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                : 'bg-red-600 hover:bg-red-700 active:scale-95 text-white shadow-red-950/20'
+            }`}
+            title={isGuest ? 'Locked in Guest Mode' : 'Upload Document'}
           >
-            <UploadCloud className="w-4 h-4" />
+            {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <UploadCloud className="w-4 h-4" />}
             <span>Upload Document</span>
           </button>
         </div>
@@ -502,12 +518,21 @@ export const DocumentsModule: React.FC = () => {
                         </button>
                         <button
                           onClick={() => {
+                            if (isGuest) {
+                              alert('Action locked: Deleting documents is disabled in Guest (View Only) mode.');
+                              return;
+                            }
                             if (window.confirm(`Delete document "${doc.title}"?`)) {
                               handleDeleteDocument(doc.id);
                             }
                           }}
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Delete record"
+                          disabled={isGuest}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isGuest
+                              ? 'text-neutral-300 cursor-not-allowed'
+                              : 'text-neutral-400 hover:text-red-600 hover:bg-red-50'
+                          }`}
+                          title={isGuest ? 'Locked in Guest Mode' : 'Delete record'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

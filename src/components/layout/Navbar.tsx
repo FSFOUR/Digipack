@@ -50,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Zone 2: Breadcrumbs / Active Context (Desktop) */}
       <div className="hidden md:flex items-center gap-2 text-xs text-neutral-400">
-        <span className="font-semibold text-neutral-300">DIGI PACK</span>
+        <span className="font-bold text-neutral-200 tracking-wider">DIGIPACK</span>
         <span>/</span>
         <span className="font-bold text-white uppercase tracking-wider">{activeModule}</span>
       </div>
@@ -88,9 +88,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Guest Mode Status & Sign In OR Profile & Logout */}
         {role === 'VIEW ONLY' ? (
           <div className="flex items-center gap-2 pl-2 border-l border-neutral-800">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/70 text-cyan-400 border border-cyan-800/80 text-[11px] font-semibold">
-              <Eye className="w-3.5 h-3.5" />
-              <span>Guest (View Only)</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/70 text-amber-300 border border-amber-800/80 text-[11px] font-semibold" title="Guest User: All tabs in View Only mode with editing locked">
+              <Eye className="w-3.5 h-3.5 text-amber-400" />
+              <span>Guest (View Only · Locked)</span>
             </span>
 
             {onOpenAuthModal && (

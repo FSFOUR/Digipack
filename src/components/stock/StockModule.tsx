@@ -18,10 +18,16 @@ import {
   Layers,
   Trash2,
   CheckCircle2,
+  Lock,
+  LayoutGrid,
+  List,
+  MapPin,
+  Sparkles,
 } from 'lucide-react';
 
 export const StockModule: React.FC = () => {
   const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const {
     boardStocks,
     stockTransactions,
@@ -34,6 +40,7 @@ export const StockModule: React.FC = () => {
     importStockFromData,
   } = useErp();
 
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGsm, setFilterGsm] = useState<string>('ALL');
   const [filterPly, setFilterPly] = useState<string>('ALL');
@@ -251,10 +258,23 @@ export const StockModule: React.FC = () => {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs"
+            onClick={() => {
+              if (isGuest) {
+                alert('Action locked: Adding board sizes is disabled in Guest (View Only) mode.');
+                return;
+              }
+              setShowAddModal(true);
+            }}
+            disabled={isGuest}
+            className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs ${
+              isGuest
+                ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+            }`}
+            title={isGuest ? 'Locked in Guest Mode' : 'Add Board Size'}
           >
-            <Plus className="w-4 h-4" /> Add Board Size
+            {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <Plus className="w-4 h-4" />}
+            <span>Add Board Size</span>
           </button>
 
           <button
@@ -265,9 +285,28 @@ export const StockModule: React.FC = () => {
             <Download className="w-4 h-4" /> Export CSV
           </button>
 
-          <label className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer">
-            <Upload className="w-4 h-4" /> Import Excel
-            <input type="file" accept=".csv,.xlsx" onChange={handleCSVUpload} className="hidden" />
+          <label
+            onClick={(e) => {
+              if (isGuest) {
+                e.preventDefault();
+                alert('Action locked: Importing Excel is disabled in Guest (View Only) mode.');
+              }
+            }}
+            className={`px-3 py-1.5 border rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors ${
+              isGuest
+                ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+                : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300 cursor-pointer'
+            }`}
+          >
+            {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <Upload className="w-4 h-4" />}
+            <span>Import Excel</span>
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={handleCSVUpload}
+              disabled={isGuest}
+              className="hidden"
+            />
           </label>
         </div>
       </div>
@@ -321,348 +360,428 @@ export const StockModule: React.FC = () => {
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 sm:flex sm:items-center sm:gap-2 w-full md:w-auto shrink-0">
-          <select
-            value={filterGsm}
-            onChange={(e) => setFilterGsm(e.target.value)}
-            className="w-full min-w-0 px-1.5 py-1.5 bg-neutral-50 border border-neutral-300 rounded text-[11px] sm:text-xs font-semibold focus:border-red-600 focus:outline-hidden truncate"
-          >
-            <option value="ALL">All GSM</option>
-            <option value="250">250 GSM</option>
-            <option value="280">280 GSM</option>
-            <option value="300">300 GSM</option>
-            <option value="320">320 GSM</option>
-            <option value="350">350 GSM</option>
-            <option value="400">400 GSM</option>
-          </select>
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="grid grid-cols-3 gap-1.5 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
+            <select
+              value={filterGsm}
+              onChange={(e) => setFilterGsm(e.target.value)}
+              className="w-full min-w-0 px-2 py-1.5 bg-neutral-50 border border-neutral-300 rounded text-[11px] sm:text-xs font-semibold focus:border-red-600 focus:outline-hidden truncate"
+            >
+              <option value="ALL">All GSM</option>
+              <option value="250">250 GSM</option>
+              <option value="280">280 GSM</option>
+              <option value="300">300 GSM</option>
+              <option value="320">320 GSM</option>
+              <option value="350">350 GSM</option>
+              <option value="400">400 GSM</option>
+            </select>
 
-          <select
-            value={filterPly}
-            onChange={(e) => setFilterPly(e.target.value)}
-            className="w-full min-w-0 px-1.5 py-1.5 bg-neutral-50 border border-neutral-300 rounded text-[11px] sm:text-xs font-semibold focus:border-red-600 focus:outline-hidden truncate"
-          >
-            <option value="ALL">All Ply</option>
-            <option value="3ply">3ply</option>
-            <option value="5ply">5ply</option>
-            <option value="6ply">6ply</option>
-            <option value="7ply">7ply</option>
-          </select>
+            <select
+              value={filterPly}
+              onChange={(e) => setFilterPly(e.target.value)}
+              className="w-full min-w-0 px-2 py-1.5 bg-neutral-50 border border-neutral-300 rounded text-[11px] sm:text-xs font-semibold focus:border-red-600 focus:outline-hidden truncate"
+            >
+              <option value="ALL">All Ply</option>
+              <option value="3ply">3ply</option>
+              <option value="5ply">5ply</option>
+              <option value="6ply">6ply</option>
+              <option value="7ply">7ply</option>
+            </select>
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full min-w-0 px-1.5 py-1.5 bg-neutral-50 border border-neutral-300 rounded text-[11px] sm:text-xs font-semibold focus:border-red-600 focus:outline-hidden truncate"
-          >
-            <option value="ALL">All Status</option>
-            <option value="LOW_STOCK">Low Stock</option>
-            <option value="CRITICAL">Critical</option>
-            <option value="OUT_OF_STOCK">Out of Stock</option>
-          </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full min-w-0 px-2 py-1.5 bg-neutral-50 border border-neutral-300 rounded text-[11px] sm:text-xs font-semibold focus:border-red-600 focus:outline-hidden truncate"
+            >
+              <option value="ALL">All Status</option>
+              <option value="LOW_STOCK">Low Stock</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="OUT_OF_STOCK">Out of Stock</option>
+            </select>
+          </div>
+
+          {/* View Switcher */}
+          <div className="flex items-center bg-neutral-100 p-0.5 rounded-lg border border-neutral-200 shrink-0">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
+                viewMode === 'list'
+                  ? 'bg-white text-neutral-900 shadow-xs'
+                  : 'text-neutral-500 hover:text-neutral-800'
+              }`}
+              title="Streamlined Table View"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Table</span>
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-white text-neutral-900 shadow-xs'
+                  : 'text-neutral-500 hover:text-neutral-800'
+              }`}
+              title="Showcase Cards View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cards</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* MOBILE DEVICE VIEW: All stock size details in one view without scrolling to side */}
-      <div className="block lg:hidden space-y-3 w-full max-w-full overflow-hidden">
-        {filteredStocks.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-xl border border-neutral-200 text-neutral-400 font-medium text-xs">
-            No stock items found matching your filters.
-          </div>
-        ) : (
-          filteredStocks.map((stock) => {
-            const isCritical = stock.availableQty <= stock.minStock;
-            const isLow = stock.availableQty <= stock.reorderLevel;
+      {/* UNIQUE & SIMPLE STOCK DISPLAY: CARD GRID VIEW */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {filteredStocks.length === 0 ? (
+            <div className="col-span-full p-12 text-center bg-white rounded-xl border border-neutral-200 text-neutral-400 font-medium text-xs">
+              No stock items found matching your filters.
+            </div>
+          ) : (
+            filteredStocks.map((stock) => {
+              const isCritical = stock.availableQty <= stock.minStock;
+              const isLow = stock.availableQty <= stock.reorderLevel;
 
-            return (
-              <div
-                key={`mob-${stock.id}`}
-                className={`bg-white rounded-xl border p-3.5 shadow-xs transition-colors ${
-                  isCritical
-                    ? 'border-rose-300 bg-rose-50/20'
-                    : isLow
-                    ? 'border-amber-300 bg-amber-50/20'
-                    : 'border-neutral-200'
-                }`}
-              >
-                {/* Header: Board Size, Ply, Reorder Badge, Location */}
-                <div className="flex items-start justify-between gap-2 pb-2 border-b border-neutral-100">
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-base font-black text-neutral-900 tracking-tight">
-                        {stock.boardSize}
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                        {stock.ply || '3ply'}
-                      </span>
-                      {isCritical && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-rose-600 text-white font-bold rounded">
-                          REORDER
+              return (
+                <div
+                  key={`grid-${stock.id}`}
+                  className={`bg-white rounded-xl border p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
+                    isCritical
+                      ? 'border-rose-300 bg-rose-50/10'
+                      : isLow
+                      ? 'border-amber-300 bg-amber-50/10'
+                      : 'border-neutral-200'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-black text-neutral-900 tracking-tight">
+                            {stock.boardSize}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                            {stock.ply || '3ply'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-neutral-500 font-medium block">
+                          {stock.length} × {stock.width} cm
                         </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-neutral-600 font-semibold mt-0.5">
-                      {stock.boardType} · {stock.gsm} GSM
-                    </div>
-                    <div className="text-[11px] text-neutral-500">
-                      {stock.length} × {stock.width} cm · {stock.creasing}
-                    </div>
-                  </div>
+                      </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="px-2 py-0.5 bg-neutral-100 border border-neutral-300 rounded font-semibold text-[10px] text-neutral-700 inline-block mb-1">
-                      {stock.location}
-                    </span>
-                    <div className="text-[11px] text-neutral-500">
-                      Rate: <span className="font-bold text-neutral-800">₹{stock.rate.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stock Numbers Grid (All metrics in one tab, zero horizontal scrolling) */}
-                <div className="grid grid-cols-4 gap-1.5 py-2.5 border-b border-neutral-100 text-center">
-                  <div className="bg-neutral-50 p-1.5 rounded-lg border border-neutral-100">
-                    <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Opening</div>
-                    <div className="text-xs font-black text-neutral-800 tabular-nums mt-0.5">
-                      {stock.openingStock.toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="bg-emerald-50/70 p-1.5 rounded-lg border border-emerald-100">
-                    <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">IN</div>
-                    <div className="text-xs font-black text-emerald-700 tabular-nums mt-0.5">
-                      +{stock.inQty.toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="bg-rose-50/70 p-1.5 rounded-lg border border-rose-100">
-                    <div className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">OUT</div>
-                    <div className="text-xs font-black text-rose-700 tabular-nums mt-0.5">
-                      -{stock.outQty.toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="bg-amber-50/70 p-1.5 rounded-lg border border-amber-100">
-                    <div className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Reserved</div>
-                    <div className="text-xs font-black text-amber-700 tabular-nums mt-0.5">
-                      {stock.reservedQty.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Available Stock & Action Buttons (Clean & fully accessible on mobile) */}
-                <div className="pt-2.5 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
-                      Available Stock
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span
-                        className={`text-base font-black tabular-nums ${
-                          isCritical
-                            ? 'text-rose-600'
-                            : isLow
-                            ? 'text-amber-600'
-                            : 'text-neutral-900'
-                        }`}
-                      >
-                        {stock.availableQty.toLocaleString()}
-                      </span>
-                      <span className="text-[10px] font-medium text-neutral-500">sheets</span>
-                    </div>
-                    <span className="text-[10px] text-neutral-400 block -mt-0.5">
-                      Val: ₹{stock.totalValue.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-
-                    {/* Actions buttons */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => {
-                          setSelectedStock(stock);
-                          setShowInModal(true);
-                        }}
-                        className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs"
-                        title="Stock IN (Receipt)"
-                      >
-                        <ArrowDownToLine className="w-3.5 h-3.5" /> IN
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setSelectedStock(stock);
-                          setShowOutModal(true);
-                        }}
-                        className="px-2.5 py-1.5 bg-neutral-900 hover:bg-black text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs"
-                        title="Stock OUT (Issue)"
-                      >
-                        <ArrowUpFromLine className="w-3.5 h-3.5" /> OUT
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStockToDelete(stock);
-                          setDeleteError(null);
-                        }}
-                        className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-100/70 bg-rose-50 rounded-lg transition-colors border border-rose-200"
-                        title={`Delete size ${stock.boardSize}`}
-                        aria-label={`Delete board size ${stock.boardSize}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* DESKTOP TABLE VIEW: Full multi-column view on larger screens */}
-      <div className="hidden lg:block bg-white rounded-xl border border-neutral-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-neutral-900 text-white font-bold tracking-wider uppercase text-[11px]">
-                <th className="p-3">Board Size</th>
-                <th className="p-3">Specs & Type</th>
-                <th className="p-3 text-right">Opening</th>
-                <th className="p-3 text-right text-emerald-400">IN</th>
-                <th className="p-3 text-right text-rose-400">OUT</th>
-                <th className="p-3 text-right text-amber-400">Reserved</th>
-                <th className="p-3 text-right">Available</th>
-                <th className="p-3 text-right">Rate</th>
-                <th className="p-3 text-right">Total Value</th>
-                <th className="p-3">Location</th>
-                <th className="p-3 text-center">Quick Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-200">
-              {filteredStocks.map((stock) => {
-                const isCritical = stock.availableQty <= stock.minStock;
-                const isLow = stock.availableQty <= stock.reorderLevel;
-
-                return (
-                  <tr
-                    key={stock.id}
-                    className={`hover:bg-neutral-50/80 transition-colors ${
-                      isCritical ? 'bg-rose-50/40' : isLow ? 'bg-amber-50/20' : ''
-                    }`}
-                  >
-                    <td className="p-3 font-black text-sm text-neutral-900">
-                      <div className="flex items-center gap-1.5">
-                        <span>{stock.boardSize}</span>
-                        {isCritical && (
-                          <span className="text-[10px] px-1 bg-rose-600 text-white font-bold rounded">
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="px-2 py-0.5 bg-neutral-100 border border-neutral-300 rounded font-semibold text-[10px] text-neutral-700 flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-neutral-400" />
+                          {stock.location}
+                        </span>
+                        {isCritical ? (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-rose-600 text-white font-bold rounded">
                             REORDER
                           </span>
-                        )}
+                        ) : isLow ? (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-600 text-white font-bold rounded">
+                            LOW
+                          </span>
+                        ) : null}
                       </div>
-                      <span className="text-[10px] text-neutral-500 font-normal block">
-                        {stock.length} × {stock.width} cm
-                      </span>
-                    </td>
+                    </div>
 
-                    <td className="p-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-semibold text-neutral-800">{stock.boardType}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                          {stock.ply || '3ply'}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-neutral-500 mt-0.5">
+                    {/* Specs Pill */}
+                    <div className="p-2 bg-neutral-50 rounded-lg border border-neutral-100 text-[11px] text-neutral-600 space-y-1">
+                      <div className="font-semibold text-neutral-800">{stock.boardType}</div>
+                      <div className="text-neutral-500 text-[10px]">
                         {stock.gsm} GSM · {stock.creasing}
                       </div>
-                    </td>
+                    </div>
 
-                    <td className="p-3 text-right font-medium text-neutral-600 tabular-nums">
-                      {stock.openingStock.toLocaleString()}
-                    </td>
-
-                    <td className="p-3 text-right font-bold text-emerald-700 tabular-nums">
-                      +{stock.inQty.toLocaleString()}
-                    </td>
-
-                    <td className="p-3 text-right font-bold text-rose-700 tabular-nums">
-                      -{stock.outQty.toLocaleString()}
-                    </td>
-
-                    <td className="p-3 text-right font-bold text-amber-700 tabular-nums">
-                      {stock.reservedQty.toLocaleString()}
-                    </td>
-
-                    <td className="p-3 text-right tabular-nums">
-                      <span
-                        className={`text-sm font-black ${
-                          isCritical
-                            ? 'text-rose-600'
-                            : isLow
-                            ? 'text-amber-600'
-                            : 'text-neutral-900'
-                        }`}
-                      >
-                        {stock.availableQty.toLocaleString()}
+                    {/* Movement Formula Chips */}
+                    <div className="bg-neutral-100/70 p-2 rounded-lg text-[11px] border border-neutral-200/80">
+                      <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
+                        Stock Movement Balance
                       </span>
-                    </td>
-
-                    <td className="p-3 text-right font-medium tabular-nums text-neutral-700">
-                      ₹{stock.rate.toFixed(2)}
-                    </td>
-
-                    <td className="p-3 text-right font-bold tabular-nums text-neutral-900">
-                      ₹{stock.totalValue.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="p-3">
-                      <span className="px-2 py-0.5 bg-neutral-100 border border-neutral-300 rounded font-semibold text-[11px]">
-                        {stock.location}
-                      </span>
-                    </td>
-
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setSelectedStock(stock);
-                            setShowInModal(true);
-                          }}
-                          className="px-2 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded font-bold text-[11px] flex items-center gap-0.5 shadow-xs"
-                          title="Stock IN (Goods Receipt)"
-                        >
-                          <ArrowDownToLine className="w-3 h-3" /> IN
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setSelectedStock(stock);
-                            setShowOutModal(true);
-                          }}
-                          className="px-2 py-1 bg-neutral-900 hover:bg-black text-white rounded font-bold text-[11px] flex items-center gap-0.5 shadow-xs"
-                          title="Stock OUT (Production Issue)"
-                        >
-                          <ArrowUpFromLine className="w-3 h-3" /> OUT
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStockToDelete(stock);
-                            setDeleteError(null);
-                          }}
-                          className="p-1 text-rose-600 hover:text-rose-700 hover:bg-rose-100/70 bg-rose-50/50 rounded transition-colors ml-0.5 border border-rose-200"
-                          title={`Delete size ${stock.boardSize}`}
-                          aria-label={`Delete board size ${stock.boardSize}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                      <div className="flex items-center justify-between font-mono text-[11px]">
+                        <span className="text-neutral-600" title="Opening">Op: {stock.openingStock}</span>
+                        <span className="text-emerald-700 font-bold" title="IN">+{stock.inQty}</span>
+                        <span className="text-rose-700 font-bold" title="OUT">-{stock.outQty}</span>
+                        <span className="text-amber-700 font-bold" title="Reserved">-{stock.reservedQty}</span>
                       </div>
+                    </div>
+
+                    {/* Available & Valuation */}
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-neutral-400 block">Available</span>
+                        <div className="text-xl font-black text-neutral-900 tabular-nums">
+                          <span className={isCritical ? 'text-rose-600' : isLow ? 'text-amber-600' : 'text-neutral-900'}>
+                            {stock.availableQty.toLocaleString()}
+                          </span>{' '}
+                          <span className="text-xs font-normal text-neutral-500">sheets</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] font-bold uppercase text-neutral-400 block">Valuation</span>
+                        <div className="font-black text-neutral-900 text-sm tabular-nums">
+                          ₹{stock.totalValue.toLocaleString('en-IN')}
+                        </div>
+                        <span className="text-[10px] text-neutral-500">₹{stock.rate.toFixed(2)}/sh</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-1.5 pt-3 mt-3 border-t border-neutral-100">
+                    <button
+                      onClick={() => {
+                        if (isGuest) {
+                          alert('Action locked: Stock IN is disabled in Guest (View Only) mode.');
+                          return;
+                        }
+                        setSelectedStock(stock);
+                        setShowInModal(true);
+                      }}
+                      disabled={isGuest}
+                      className={`flex-1 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow-xs ${
+                        isGuest
+                          ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                          : 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                      }`}
+                    >
+                      {isGuest ? <Lock className="w-3.5 h-3.5 text-amber-600" /> : <ArrowDownToLine className="w-3.5 h-3.5" />} IN
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (isGuest) {
+                          alert('Action locked: Stock OUT is disabled in Guest (View Only) mode.');
+                          return;
+                        }
+                        setSelectedStock(stock);
+                        setShowOutModal(true);
+                      }}
+                      disabled={isGuest}
+                      className={`flex-1 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow-xs ${
+                        isGuest
+                          ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                          : 'bg-neutral-900 hover:bg-black text-white'
+                      }`}
+                    >
+                      {isGuest ? <Lock className="w-3.5 h-3.5 text-amber-600" /> : <ArrowUpFromLine className="w-3.5 h-3.5" />} OUT
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isGuest) {
+                          alert('Action locked: Deleting stock is disabled in Guest (View Only) mode.');
+                          return;
+                        }
+                        setStockToDelete(stock);
+                        setDeleteError(null);
+                      }}
+                      disabled={isGuest}
+                      className={`p-1.5 rounded-lg transition-colors border ${
+                        isGuest
+                          ? 'text-neutral-400 bg-neutral-100 border-neutral-200 cursor-not-allowed'
+                          : 'text-rose-600 hover:text-rose-700 hover:bg-rose-100/70 bg-rose-50 border-rose-200'
+                      }`}
+                      title="Delete size"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* UNIQUE & SIMPLE STOCK DISPLAY: STREAMLINED LIST / TABLE VIEW */}
+      {viewMode === 'list' && (
+        <div className="bg-white rounded-xl border border-neutral-200 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-neutral-900 text-white font-bold tracking-wider uppercase text-[11px]">
+                  <th className="p-3.5 pl-4">Board Size & Material Specs</th>
+                  <th className="p-3.5">Balance Flow (Op + IN - OUT - Rsvd)</th>
+                  <th className="p-3.5 text-right">Net Available</th>
+                  <th className="p-3.5 text-right">Valuation (Rate)</th>
+                  <th className="p-3.5 text-center">Location</th>
+                  <th className="p-3.5 pr-4 text-center">Quick Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {filteredStocks.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-10 text-center text-neutral-400 font-medium text-xs">
+                      No stock items found matching your filters.
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ) : (
+                  filteredStocks.map((stock) => {
+                    const isCritical = stock.availableQty <= stock.minStock;
+                    const isLow = stock.availableQty <= stock.reorderLevel;
+
+                    return (
+                      <tr
+                        key={`list-${stock.id}`}
+                        className={`hover:bg-neutral-50/90 transition-colors ${
+                          isCritical ? 'bg-rose-50/40' : isLow ? 'bg-amber-50/20' : ''
+                        }`}
+                      >
+                        {/* 1. Board Size & Specs */}
+                        <td className="p-3.5 pl-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-neutral-100 border border-neutral-200 flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                              <span className="text-[11px] font-black text-neutral-900 leading-none">
+                                {stock.ply?.replace('ply', '') || '3'}P
+                              </span>
+                              <span className="text-[8px] text-neutral-400 font-bold uppercase mt-0.5">PLY</span>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-black text-sm text-neutral-900 tracking-tight">{stock.boardSize}</span>
+                                <span className="text-xs text-neutral-500 font-medium">({stock.length} × {stock.width} cm)</span>
+                                {isCritical ? (
+                                  <span className="text-[10px] px-1.5 py-0.2 bg-rose-600 text-white font-bold rounded">
+                                    REORDER
+                                  </span>
+                                ) : isLow ? (
+                                  <span className="text-[10px] px-1.5 py-0.2 bg-amber-600 text-white font-bold rounded">
+                                    LOW
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="text-[11px] text-neutral-600 font-medium flex items-center gap-1.5 mt-0.5">
+                                <span className="font-semibold text-neutral-800">{stock.boardType}</span>
+                                <span className="text-neutral-300">•</span>
+                                <span className="font-bold text-neutral-700">{stock.gsm} GSM</span>
+                                <span className="text-neutral-300">•</span>
+                                <span className="text-neutral-500 text-[10px]">{stock.creasing}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 2. Stock Movement Flow */}
+                        <td className="p-3.5">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100/90 rounded-lg text-xs font-semibold text-neutral-700 border border-neutral-200 font-mono">
+                            <span className="text-neutral-500" title="Opening Stock">{stock.openingStock.toLocaleString()}</span>
+                            <span className="text-emerald-700 font-bold" title="Stock IN">+{stock.inQty.toLocaleString()}</span>
+                            <span className="text-rose-700 font-bold" title="Stock OUT">-{stock.outQty.toLocaleString()}</span>
+                            <span className="text-amber-700 font-bold" title="Reserved Stock">-{stock.reservedQty.toLocaleString()}</span>
+                          </div>
+                        </td>
+
+                        {/* 3. Available Stock */}
+                        <td className="p-3.5 text-right tabular-nums">
+                          <div
+                            className={`text-base font-black ${
+                              isCritical
+                                ? 'text-rose-600'
+                                : isLow
+                                ? 'text-amber-600'
+                                : 'text-neutral-900'
+                            }`}
+                          >
+                            {stock.availableQty.toLocaleString()}
+                          </div>
+                          <span className="text-[10px] text-neutral-500 font-medium">sheets</span>
+                        </td>
+
+                        {/* 4. Valuation (Rate) */}
+                        <td className="p-3.5 text-right tabular-nums">
+                          <div className="font-black text-neutral-900 text-sm">
+                            ₹{stock.totalValue.toLocaleString('en-IN')}
+                          </div>
+                          <span className="text-[11px] text-neutral-500">₹{stock.rate.toFixed(2)}/sh</span>
+                        </td>
+
+                        {/* 5. Location */}
+                        <td className="p-3.5 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-neutral-100 border border-neutral-300 rounded font-semibold text-[11px] text-neutral-800">
+                            <MapPin className="w-3 h-3 text-neutral-400" />
+                            {stock.location}
+                          </span>
+                        </td>
+
+                        {/* 6. Actions */}
+                        <td className="p-3.5 pr-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                if (isGuest) {
+                                  alert('Action locked: Stock IN is disabled in Guest (View Only) mode.');
+                                  return;
+                                }
+                                setSelectedStock(stock);
+                                setShowInModal(true);
+                              }}
+                              disabled={isGuest}
+                              className={`px-2.5 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors ${
+                                isGuest
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                                  : 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                              }`}
+                              title={isGuest ? 'Locked in Guest Mode' : 'Stock IN (Goods Receipt)'}
+                            >
+                              {isGuest ? <Lock className="w-3 h-3 text-amber-600" /> : <ArrowDownToLine className="w-3 h-3" />} IN
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (isGuest) {
+                                  alert('Action locked: Stock OUT is disabled in Guest (View Only) mode.');
+                                  return;
+                                }
+                                setSelectedStock(stock);
+                                setShowOutModal(true);
+                              }}
+                              disabled={isGuest}
+                              className={`px-2.5 py-1.5 rounded-lg font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors ${
+                                isGuest
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                                  : 'bg-neutral-900 hover:bg-black text-white'
+                              }`}
+                              title={isGuest ? 'Locked in Guest Mode' : 'Stock OUT (Production Issue)'}
+                            >
+                              {isGuest ? <Lock className="w-3 h-3 text-amber-600" /> : <ArrowUpFromLine className="w-3 h-3" />} OUT
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isGuest) {
+                                  alert('Action locked: Deleting stock is disabled in Guest (View Only) mode.');
+                                  return;
+                                }
+                                setStockToDelete(stock);
+                                setDeleteError(null);
+                              }}
+                              disabled={isGuest}
+                              className={`p-1.5 rounded-lg transition-colors border ${
+                                isGuest
+                                  ? 'text-neutral-400 bg-neutral-100 border-neutral-200 cursor-not-allowed'
+                                  : 'text-rose-600 hover:text-rose-700 hover:bg-rose-100/70 bg-rose-50/50 border-rose-200'
+                              }`}
+                              title={isGuest ? 'Locked in Guest Mode' : `Delete size ${stock.boardSize}`}
+                              aria-label={`Delete board size ${stock.boardSize}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Stock IN Modal */}
       {showInModal && selectedStock && (

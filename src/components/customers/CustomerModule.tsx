@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useErp } from '../../context/ErpDataContext';
 import { Customer } from '../../types/erp';
 import { StatusBadge } from '../common/StatusBadge';
@@ -15,9 +16,12 @@ import {
   TrendingUp,
   CreditCard,
   Building,
+  Lock,
 } from 'lucide-react';
 
 export const CustomerModule: React.FC = () => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const { customers, quotations, salesOrders, invoices, payments, addCustomer, updateCustomer } = useErp();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,10 +93,23 @@ export const CustomerModule: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setShowAddModal(true)}
-          className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs"
+          onClick={() => {
+            if (isGuest) {
+              alert('Action locked: Adding customers is disabled in Guest (View Only) mode.');
+              return;
+            }
+            setShowAddModal(true);
+          }}
+          disabled={isGuest}
+          className={`px-3.5 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs ${
+            isGuest
+              ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+              : 'bg-red-600 hover:bg-red-700 text-white'
+          }`}
+          title={isGuest ? 'Locked in Guest Mode' : 'Add New Customer'}
         >
-          <Plus className="w-4 h-4" /> Add New Customer
+          {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <Plus className="w-4 h-4" />}
+          <span>Add New Customer</span>
         </button>
       </div>
 

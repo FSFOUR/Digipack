@@ -97,8 +97,16 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-neutral-300 overflow-hidden flex flex-col max-h-[90vh]">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 cursor-pointer"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-neutral-300 overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+      >
         {/* Header */}
         <div className="p-4 bg-neutral-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -116,9 +124,9 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
         </div>
 
         {/* Content Table */}
-        <div className="p-4 overflow-y-auto flex-1">
-          <div className="border border-neutral-200 rounded-lg overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+        <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
+          <div className="border border-neutral-200 rounded-lg overflow-x-auto custom-scrollbar-x">
+            <table className="w-full min-w-[700px] text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-neutral-100 border-b border-neutral-200 font-bold text-neutral-700">
                   <th className="p-2.5">Staff ID</th>

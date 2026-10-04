@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useErp } from '../../context/ErpDataContext';
 import { Employee, AttendanceRecord } from '../../types/erp';
 import { DigiPackLogo } from '../common/DigiPackLogo';
@@ -13,9 +14,12 @@ import {
   DollarSign,
   Download,
   X,
+  Lock,
 } from 'lucide-react';
 
 export const HrModule: React.FC = () => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const { employees, attendance, markAttendance } = useErp();
 
   const [activeTab, setActiveTab] = useState<'EMPLOYEES' | 'ATTENDANCE' | 'PAYROLL'>('EMPLOYEES');
@@ -114,8 +118,8 @@ export const HrModule: React.FC = () => {
       {/* Employees Directory Tab */}
       {activeTab === 'EMPLOYEES' && (
         <div className="bg-white rounded-xl border border-neutral-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="overflow-x-auto custom-scrollbar-x custom-scrollbar max-h-[600px] overflow-y-auto">
+            <table className="w-full min-w-[760px] text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-neutral-900 text-white font-bold tracking-wider uppercase text-[11px]">
                   <th className="p-3">Staff ID</th>
@@ -187,15 +191,28 @@ export const HrModule: React.FC = () => {
             </div>
 
             <button
-              onClick={handleSaveAttendance}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs"
+              onClick={() => {
+                if (isGuest) {
+                  alert('Action locked: Saving attendance is disabled in Guest (View Only) mode.');
+                  return;
+                }
+                handleSaveAttendance();
+              }}
+              disabled={isGuest}
+              className={`px-4 py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs ${
+                isGuest
+                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+              title={isGuest ? 'Locked in Guest Mode' : 'Save Daily Roster'}
             >
-              <CheckCircle2 className="w-4 h-4" /> Save Daily Roster
+              {isGuest ? <Lock className="w-4 h-4 text-amber-600" /> : <CheckCircle2 className="w-4 h-4" />}
+              <span>Save Daily Roster</span>
             </button>
           </div>
 
-          <div className="border border-neutral-200 rounded-lg overflow-x-auto text-xs">
-            <table className="w-full text-left border-collapse">
+          <div className="border border-neutral-200 rounded-lg overflow-x-auto custom-scrollbar-x custom-scrollbar max-h-[550px] overflow-y-auto text-xs">
+            <table className="w-full min-w-[650px] text-left border-collapse">
               <thead>
                 <tr className="bg-neutral-100 border-b border-neutral-200 font-bold text-neutral-700 text-[11px] uppercase">
                   <th className="p-2.5">Employee ID & Name</th>
@@ -267,8 +284,8 @@ export const HrModule: React.FC = () => {
             <span className="text-[11px] text-neutral-400 font-normal">Salary Month: September 2026</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="overflow-x-auto custom-scrollbar-x custom-scrollbar max-h-[550px] overflow-y-auto">
+            <table className="w-full min-w-[700px] text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-neutral-100 font-bold text-neutral-700 border-b border-neutral-200 text-[11px] uppercase">
                   <th className="p-3">Staff ID & Name</th>

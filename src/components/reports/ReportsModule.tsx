@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useErp } from '../../context/ErpDataContext';
 import { StatusBadge } from '../common/StatusBadge';
 import {
@@ -9,9 +10,12 @@ import {
   Filter,
   FileSpreadsheet,
   Calendar,
+  Eye,
 } from 'lucide-react';
 
 export const ReportsModule: React.FC = () => {
+  const { role } = useAuth();
+  const isGuest = role === 'VIEW ONLY';
   const {
     quotations,
     salesOrders,
@@ -91,7 +95,13 @@ export const ReportsModule: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isGuest && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
+              <Eye className="w-3.5 h-3.5 text-amber-600" />
+              <span>Guest View-Only</span>
+            </div>
+          )}
           <button
             onClick={handleExportCSV}
             className="px-3.5 py-2 bg-neutral-900 hover:bg-black text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-xs"

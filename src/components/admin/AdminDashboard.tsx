@@ -665,8 +665,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     });
   }, [activities, activityTypeFilter, activitySearchTerm]);
 
-  // Security check: Only Admin / Owner can access
-  const isAuthorizedAdmin = role === 'OWNER / ADMIN' || role === 'MANAGER';
+  // Security check: Only Admin / Owner or Guest View Only can access
+  const isAuthorizedAdmin = role === 'OWNER / ADMIN' || role === 'MANAGER' || role === 'VIEW ONLY';
+  const isGuestViewOnly = role === 'VIEW ONLY';
 
   if (!isAuthorizedAdmin) {
     return (
@@ -734,19 +735,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </button>
 
           <button
-            onClick={() => setActiveTab('clear-data')}
-            className="px-3.5 py-2 bg-neutral-800 hover:bg-red-950/60 active:scale-95 text-neutral-300 hover:text-red-400 font-bold text-xs rounded-xl border border-neutral-700 transition-all flex items-center gap-1.5"
-            title="Open Clear Data controls"
+            onClick={() => {
+              if (isGuestViewOnly) {
+                alert('Action locked: Data management is disabled in Guest (View Only) mode.');
+                return;
+              }
+              setActiveTab('clear-data');
+            }}
+            disabled={isGuestViewOnly}
+            className={`px-3.5 py-2 active:scale-95 font-bold text-xs rounded-xl border transition-all flex items-center gap-1.5 ${
+              isGuestViewOnly
+                ? 'bg-neutral-800/60 text-neutral-500 border-neutral-800 cursor-not-allowed opacity-60'
+                : 'bg-neutral-800 hover:bg-red-950/60 text-neutral-300 hover:text-red-400 border-neutral-700'
+            }`}
+            title={isGuestViewOnly ? 'Locked in Guest View-Only Mode' : 'Open Clear Data controls'}
           >
-            <Trash2 className="w-4 h-4 text-rose-500" />
+            {isGuestViewOnly ? <Lock className="w-4 h-4 text-amber-500" /> : <Trash2 className="w-4 h-4 text-rose-500" />}
             <span>Clear Data</span>
           </button>
 
           <button
-            onClick={() => setNewStaffModalOpen(true)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5"
+            onClick={() => {
+              if (isGuestViewOnly) {
+                alert('Action locked: Adding staff is disabled in Guest (View Only) mode.');
+                return;
+              }
+              setNewStaffModalOpen(true);
+            }}
+            disabled={isGuestViewOnly}
+            className={`px-4 py-2 font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 ${
+              isGuestViewOnly
+                ? 'bg-neutral-800 text-neutral-500 border border-neutral-700 cursor-not-allowed opacity-60'
+                : 'bg-red-600 hover:bg-red-700 active:scale-95 text-white'
+            }`}
+            title={isGuestViewOnly ? 'Locked in Guest View-Only Mode' : 'Add New Staff User'}
           >
-            <Plus className="w-4 h-4" />
+            {isGuestViewOnly ? <Lock className="w-4 h-4 text-amber-500" /> : <Plus className="w-4 h-4" />}
             <span>Add Staff User</span>
           </button>
         </div>
@@ -962,10 +986,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
               {pendingUsers.length > 0 && (
                 <button
-                  onClick={handleApproveAllPending}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+                  onClick={() => {
+                    if (isGuestViewOnly) {
+                      alert('Action locked in Guest (View Only) mode.');
+                      return;
+                    }
+                    handleApproveAllPending();
+                  }}
+                  disabled={isGuestViewOnly}
+                  className={`px-3.5 py-1.5 font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 self-start sm:self-auto ${
+                    isGuestViewOnly
+                      ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  }`}
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  {isGuestViewOnly ? <Lock className="w-3.5 h-3.5 text-amber-600" /> : <Check className="w-3.5 h-3.5" />}
                   Approve All Pending ({pendingUsers.length})
                 </button>
               )}
@@ -989,7 +1024,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-neutral-100">
+              <div className="divide-y divide-neutral-100 max-h-[520px] overflow-y-auto custom-scrollbar">
                 {pendingUsers.map((user) => (
                   <div
                     key={user.uid}
@@ -1111,8 +1146,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Activities Table */}
-            <div className="w-full overflow-hidden">
-              <table className="w-full table-fixed text-left text-xs border-collapse">
+            <div className="w-full overflow-x-auto overflow-y-auto max-h-[580px] custom-scrollbar">
+              <table className="w-full min-w-[760px] table-fixed text-left text-xs border-collapse">
                 <thead className="bg-neutral-50/80 text-neutral-500 font-semibold uppercase tracking-wider text-[10px] border-b border-neutral-200">
                   <tr>
                     <th className="px-4 py-3 text-left w-36 lg:w-44">Timestamp</th>
@@ -1225,8 +1260,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Users Directory Table */}
-            <div className="w-full overflow-hidden">
-              <table className="w-full table-fixed text-left text-xs border-collapse">
+            <div className="w-full overflow-x-auto overflow-y-auto max-h-[580px] custom-scrollbar">
+              <table className="w-full min-w-[720px] table-fixed text-left text-xs border-collapse">
                 <thead className="bg-neutral-50/80 text-neutral-500 font-semibold uppercase tracking-wider text-[10px] border-b border-neutral-200">
                   <tr>
                     <th className="px-4 py-3 text-left w-auto min-w-[200px]">Staff Member & ID</th>
@@ -1265,11 +1300,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       <td className="px-3 py-3 truncate">
                         <select
                           value={user.role}
+                          disabled={isGuestViewOnly}
                           onChange={(e) => {
+                            if (isGuestViewOnly) return;
                             const newR = e.target.value as UserRole;
                             handleUpdateStatus(user.uid, user.status, newR);
                           }}
-                          className="w-full bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-semibold py-1 px-1.5 text-neutral-800 focus:outline-none truncate"
+                          className={`w-full bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-semibold py-1 px-1.5 text-neutral-800 focus:outline-none truncate ${
+                            isGuestViewOnly ? 'cursor-not-allowed opacity-75' : ''
+                          }`}
                         >
                           {ALL_ROLES.map((r) => (
                             <option key={r} value={r}>
@@ -1297,6 +1336,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => {
+                              if (isGuestViewOnly) {
+                                alert('Editing permissions is locked in Guest mode.');
+                                return;
+                              }
                               setEditingPermissionsUser(user);
                               setEditingAllowedPages(
                                 user.allowedPages && user.allowedPages.length > 0
@@ -1304,8 +1347,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                                   : DEFAULT_ROLE_PAGES[user.role] || []
                               );
                             }}
-                            className="p-1.5 text-neutral-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-semibold border border-transparent hover:border-blue-200"
-                            title="Edit Role-Based Page Access Permissions"
+                            disabled={isGuestViewOnly}
+                            className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-semibold border ${
+                              isGuestViewOnly
+                                ? 'text-neutral-400 cursor-not-allowed opacity-50 border-transparent'
+                                : 'text-neutral-600 hover:text-blue-600 hover:bg-blue-50 border-transparent hover:border-blue-200'
+                            }`}
+                            title={isGuestViewOnly ? 'Locked in Guest Mode' : 'Edit Role-Based Page Access Permissions'}
                           >
                             <CheckSquare className="w-3.5 h-3.5 text-blue-600" />
                             <span className="hidden xl:inline">Pages</span>
@@ -1313,8 +1361,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
                           {user.status === 'PENDING' && (
                             <button
-                              onClick={() => handleUpdateStatus(user.uid, 'ACTIVE')}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
+                              onClick={() => {
+                                if (isGuestViewOnly) {
+                                  alert('Action locked in Guest mode.');
+                                  return;
+                                }
+                                handleUpdateStatus(user.uid, 'ACTIVE');
+                              }}
+                              disabled={isGuestViewOnly}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                                isGuestViewOnly
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              }`}
                             >
                               Approve
                             </button>
@@ -1322,9 +1381,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
                           {user.status === 'ACTIVE' && user.role !== 'OWNER / ADMIN' && (
                             <button
-                              onClick={() => handleUpdateStatus(user.uid, 'SUSPENDED')}
-                              className="p-1.5 text-neutral-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                              title="Suspend user"
+                              onClick={() => {
+                                if (isGuestViewOnly) {
+                                  alert('Action locked in Guest mode.');
+                                  return;
+                                }
+                                handleUpdateStatus(user.uid, 'SUSPENDED');
+                              }}
+                              disabled={isGuestViewOnly}
+                              className={`p-1.5 rounded-lg transition-colors ${
+                                isGuestViewOnly
+                                  ? 'text-neutral-300 cursor-not-allowed'
+                                  : 'text-neutral-400 hover:text-amber-600 hover:bg-amber-50'
+                              }`}
+                              title={isGuestViewOnly ? 'Locked in Guest Mode' : 'Suspend user'}
                             >
                               <UserX className="w-4 h-4" />
                             </button>
@@ -1332,8 +1402,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
                           {user.status === 'SUSPENDED' && (
                             <button
-                              onClick={() => handleUpdateStatus(user.uid, 'ACTIVE')}
-                              className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors"
+                              onClick={() => {
+                                if (isGuestViewOnly) {
+                                  alert('Action locked in Guest mode.');
+                                  return;
+                                }
+                                handleUpdateStatus(user.uid, 'ACTIVE');
+                              }}
+                              disabled={isGuestViewOnly}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                                isGuestViewOnly
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              }`}
                             >
                               Re-activate
                             </button>
@@ -1675,7 +1756,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </button>
             </div>
 
-            <form onSubmit={handleCreateStaff} className="p-5 space-y-4 text-xs overflow-y-auto flex-1">
+            <form onSubmit={handleCreateStaff} className="p-5 space-y-4 text-xs overflow-y-auto max-h-[72vh] custom-scrollbar flex-1">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-neutral-700 mb-1">Staff ID</label>
@@ -1921,7 +2002,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </button>
             </div>
 
-            <div className="p-5 space-y-4 text-xs overflow-y-auto flex-1">
+            <div className="p-5 space-y-4 text-xs overflow-y-auto max-h-[65vh] custom-scrollbar flex-1">
               <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
                 <p className="text-neutral-600 text-xs">
                   Authorize or restrict which pages this user can view and edit:
