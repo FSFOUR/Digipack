@@ -150,7 +150,18 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
-  const { role, profile, updateUserStatus, switchRoleForDemo } = useAuth();
+  const {
+    role,
+    profile,
+    updateUserStatus,
+    deleteUserAccount,
+    switchRoleForDemo,
+    allUsers,
+    pendingUsers,
+    pendingUsersCount,
+    newRegistrationAlert,
+    dismissAlert,
+  } = useAuth();
   const {
     customers,
     boardStocks,
@@ -179,20 +190,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   // Active view tab
   const [activeTab, setActiveTab] = useState<'approvals' | 'activity' | 'all-users' | 'backup' | 'clear-data'>('approvals');
 
-  // Users state with localStorage persistence - purge legacy demo data
-  const [users, setUsers] = useState<UserProfile[]>(() => {
-    try {
-      localStorage.removeItem(LEGACY_USERS_KEY);
-      const cached = localStorage.getItem(USERS_STORAGE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.warn('Failed to load users from local storage', e);
+  // Users state synchronized with live Firestore from AuthContext
+  const [users, setUsers] = useState<UserProfile[]>(allUsers);
+
+  useEffect(() => {
+    if (allUsers && allUsers.length > 0) {
+      setUsers(allUsers);
     }
-    return INITIAL_STAFF_USERS;
-  });
+  }, [allUsers]);
 
   // Activities state - purge legacy demo data
   const [activities, setActivities] = useState<AuditLog[]>(() => {
@@ -626,7 +631,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   };
 
   // Metrics
-  const pendingUsers = useMemo(() => users.filter((u) => u.status === 'PENDING'), [users]);
   const activeUsers = useMemo(() => users.filter((u) => u.status === 'ACTIVE'), [users]);
 
   // Filtered Users
@@ -775,6 +779,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </button>
         </div>
       </div>
+
+      {/* Instant Real-Time New Registration Notification Banner for Admin */}
+      {newRegistrationAlert && (
+        <div className="p-4 bg-gradient-to-r from-amber-500/15 via-red-500/10 to-amber-500/20 border-2 border-amber-500 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-3">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-black flex items-center justify-center font-black text-lg shrink-0 shadow-md">
+              🔔
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-amber-600 text-white font-black text-[10px] uppercase tracking-wider">
+                  Instant Registration Request Received
+                </span>
+                <span className="text-xs text-neutral-500 font-semibold">
+                  {new Date(newRegistrationAlert.createdAt || Date.now()).toLocaleTimeString()}
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-neutral-900 mt-1">
+                {newRegistrationAlert.fullName} ({newRegistrationAlert.staffId})
+              </h3>
+              <p className="text-xs text-neutral-600 mt-0.5">
+                Department: <strong className="text-neutral-900">{newRegistrationAlert.department}</strong> | Designation: <strong className="text-neutral-900">{newRegistrationAlert.designation}</strong> | Email: <strong className="text-neutral-900">{newRegistrationAlert.email}</strong> | Mobile: <strong className="text-neutral-900">{newRegistrationAlert.mobileNumber}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                handleUpdateStatus(newRegistrationAlert.uid, 'ACTIVE', 'PRODUCTION OPERATOR');
+                dismissAlert();
+              }}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Check className="w-4 h-4" />
+              <span>Approve (Operator)</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('approvals');
+                dismissAlert();
+              }}
+              className="px-3.5 py-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Review in Approvals</span>
+            </button>
+            <button
+              onClick={dismissAlert}
+              className="p-2 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+              title="Dismiss Alert"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

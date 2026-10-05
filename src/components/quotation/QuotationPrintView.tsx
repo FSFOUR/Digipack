@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Quotation } from '../../types/erp';
 import { DigiPackLogo } from '../common/DigiPackLogo';
-import { Printer, Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Loader2 } from 'lucide-react';
+import { exportElementToPdf } from '../../utils/printAndPdfHelper';
 
 interface QuotationPrintViewProps {
   quotation: Quotation;
@@ -9,8 +10,20 @@ interface QuotationPrintViewProps {
 }
 
 export const QuotationPrintView: React.FC<QuotationPrintViewProps> = ({ quotation, onBack }) => {
-  const handlePrint = () => {
-    window.print();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleSavePdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      await exportElementToPdf(
+        'quotation-print-sheet',
+        `Quotation_${quotation.quotationNo}_${quotation.customerName.replace(/[^a-zA-Z0-9]/g, '_')}`
+      );
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   return (
@@ -26,16 +39,21 @@ export const QuotationPrintView: React.FC<QuotationPrintViewProps> = ({ quotatio
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold uppercase tracking-wider shadow-xs transition-colors"
+            onClick={handleSavePdf}
+            disabled={isGeneratingPdf}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white rounded text-xs font-bold uppercase tracking-wider shadow-xs transition-colors cursor-pointer"
           >
-            <Printer className="w-4 h-4" /> Print Quotation (A4)
-          </button>
-          <button
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-neutral-900 hover:bg-black text-white rounded text-xs font-bold uppercase tracking-wider transition-colors"
-          >
-            <Download className="w-4 h-4" /> Save as PDF
+            {isGeneratingPdf ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                <span>Generating PDF...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span>Save as PDF</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -43,8 +61,8 @@ export const QuotationPrintView: React.FC<QuotationPrintViewProps> = ({ quotatio
       {/* A4 Printable Document Container matching the exact PDF format */}
       <div
         id="quotation-print-sheet"
-        className="w-full max-w-4xl bg-white p-8 sm:p-12 border border-neutral-300 shadow-md text-black font-sans print:p-0 print:border-none print:shadow-none"
-        style={{ minHeight: '297mm', boxSizing: 'border-box' }}
+        className="w-full max-w-4xl bg-white p-5 sm:p-6 border border-neutral-300 shadow-md text-black font-sans print:p-0 print:border-none print:shadow-none"
+        style={{ maxWidth: '210mm', width: '100%', boxSizing: 'border-box' }}
       >
         {/* Header: Logo on left, Company address on right */}
         <div className="flex justify-between items-start pb-6 border-b border-neutral-800">
@@ -248,7 +266,7 @@ export const QuotationPrintView: React.FC<QuotationPrintViewProps> = ({ quotatio
             <div className="space-y-3 text-[11px]">
               <div className="font-medium text-neutral-600">Authorized Signatory</div>
               <div>
-                Name: <span className="inline-block border-b border-dotted border-black w-48 ml-1">Shafi</span>
+                Name: <span className="inline-block border-b border-dotted border-black w-48 ml-1"></span>
               </div>
               <div>
                 Signature & Seal: <span className="inline-block border-b border-dotted border-black w-48 ml-1"></span>

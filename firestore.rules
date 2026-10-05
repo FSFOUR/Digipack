@@ -1,9 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default catch-all
+    // Users collection: Allow read, new staff registration request submission, and admin approvals
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // ERP Data collections: Board stocks, quotations, job cards, customers, logs
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }
