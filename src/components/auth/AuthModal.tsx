@@ -21,6 +21,8 @@ interface AuthModalProps {
   onClose: () => void;
 }
 
+const REMEMBER_KEY = 'digipack_saved_login_credentials';
+
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const {
     loginWithGoogle,
@@ -32,8 +34,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   } = useAuth();
 
   const [mode, setMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
-  const [email, setEmail] = useState('admin');
-  const [password, setPassword] = useState('Digipack@2026');
+  const [savePassword, setSavePassword] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      return !!saved;
+    } catch {
+      return false;
+    }
+  });
+
+  const [email, setEmail] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.email || '';
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  });
+
+  const [password, setPassword] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.password || '';
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  });
+
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Signup fields
@@ -43,6 +78,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [department, setDepartment] = useState('Production');
   const [designation, setDesignation] = useState('Machine Operator');
   const [signupSuccess, setSignupSuccess] = useState(false);
+
+  // Reset/sync credentials when modal opens or closes
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const saved = localStorage.getItem(REMEMBER_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && (parsed.email || parsed.password)) {
+            setEmail(parsed.email || '');
+            setPassword(parsed.password || '');
+            setSavePassword(true);
+            setLoginError(null);
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
+      // If no valid saved credentials or save password was not chosen, always ensure empty
+      setEmail('');
+      setPassword('');
+      setSavePassword(false);
+      setLoginError(null);
+    } else {
+      // When modal is closed, if savePassword is not active, purge credentials from memory
+      try {
+        const saved = localStorage.getItem(REMEMBER_KEY);
+        if (!saved) {
+          setEmail('');
+          setPassword('');
+        }
+      } catch {
+        setEmail('');
+        setPassword('');
+      }
+    }
+  }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
@@ -63,6 +136,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoginError(null);
     try {
       await loginWithEmail(email, password);
+      if (savePassword) {
+        try {
+          localStorage.setItem(
+            REMEMBER_KEY,
+            JSON.stringify({ email, password })
+          );
+        } catch {
+          // ignore
+        }
+      } else {
+        // Explicitly delete any stored credentials for all users if save password is not checked
+        try {
+          localStorage.removeItem(REMEMBER_KEY);
+        } catch {
+          // ignore
+        }
+        setEmail('');
+        setPassword('');
+      }
       onClose();
     } catch (err: any) {
       setLoginError(err.message || 'Login failed. Please check credentials.');
@@ -174,7 +266,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   <input
                     type="text"
                     required
-                    placeholder="admin"
+                    placeholder="Enter username or email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-300 rounded text-xs font-bold focus:border-red-600 focus:outline-hidden"
@@ -189,12 +281,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   <input
                     type="password"
                     required
-                    placeholder="Digipack@2026"
+                    placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-300 rounded text-xs font-bold focus:border-red-600 focus:outline-hidden"
                   />
                 </div>
+              </div>
+
+              {/* Save password for future login checkbox */}
+              <div className="flex items-center justify-between pt-0.5 pb-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-neutral-700 hover:text-neutral-900">
+                  <input
+                    type="checkbox"
+                    checked={savePassword}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSavePassword(checked);
+                      if (!checked) {
+                        try {
+                          localStorage.removeItem(REMEMBER_KEY);
+                        } catch {}
+                      }
+                    }}
+                    className="w-4 h-4 text-red-600 rounded border-neutral-300 focus:ring-red-500 cursor-pointer accent-red-600"
+                  />
+                  <span className="text-xs font-semibold text-neutral-800">Save Password</span>
+                </label>
+                {savePassword && (email || password) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('');
+                      setPassword('');
+                      setSavePassword(false);
+                      try {
+                        localStorage.removeItem(REMEMBER_KEY);
+                      } catch {}
+                    }}
+                    className="text-[11px] text-neutral-400 hover:text-rose-600 font-medium transition-colors"
+                  >
+                    Clear saved
+                  </button>
+                )}
               </div>
 
               <button
